@@ -73,7 +73,7 @@ class OOPSJoExpert(OOPSTestExpert):
     _re_exp_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_jo>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
     _re_test = re.compile(_re_jo + _re_exp_jo)
 
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):
+    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
         """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
         jo = float(self.parsedOut['jo'])
         digits = max(int(numpy.ceil(numpy.log10(jo) * tolerance_factor)), 1)
@@ -81,10 +81,7 @@ class OOPSJoExpert(OOPSTestExpert):
                 "significant_digits":str(int(digits))}
 
     def summary(self):
-        return {'Jo':float(self.parsedOut['jo']),
-                'Expected Jo':float(self.parsedOut['exp_jo']),
-                'Digits':float(self.parsedOut['digits']),
-                'as EXPECTED_RESULT':self.as_EXPECTED_RESULT()}
+        return {'Jo':float(self.parsedOut['jo'])}
 
     @classmethod
     def compare_2summaries(cls, test, ref,
@@ -130,7 +127,7 @@ class OOPSJoADExpert(OOPSTestExpert):
     _re_ad = '<Message file=".+" line="\d+"><!\[CDATA\[dx1\.dx2 = (?P<dx1dx2>-?\d+\.\d+(e(\+|-)\d+)?) dy1\.dy2 = (?P<dy1dy2>-?\d+\.\d+(e(\+|-)\d+)?) (D|d)igits = (?P<digits>-?\d+\.\d+|inf)\]\]></Message>'
     _re_test = re.compile(_re_ad)
 
-    def as_EXPECTED_RESULT(self):
+    def as_EXPECTED_RESULT(self):  # TODO: CLEANME
         """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
         digits = min(float(self.parsedOut['digits']), 16)
         return {"significant_digits":str(int(digits))}
@@ -138,8 +135,7 @@ class OOPSJoADExpert(OOPSTestExpert):
     def summary(self):
         return {'dx1.dx2':float(self.parsedOut['dx1dx2']),
                 'dy1.dy2':float(self.parsedOut['dy1dy2']),
-                'Digits':min(float(self.parsedOut['digits']), 16),
-                'as EXPECTED_RESULT':self.as_EXPECTED_RESULT()}
+                'Digits':min(float(self.parsedOut['digits']), 16)}
 
     @classmethod
     def compare_2summaries(cls, test, ref, validation_threshold=JOAD_DIGITS):
@@ -275,7 +271,7 @@ class OOPSStateDiffExpert(OOPSTestExpert):
     _re_exp_statediff = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_statediff>(\+|\-)*\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+(\.\d+)*)\]\]></Message>'
     _re_test = re.compile(_re_statediff + _re_exp_statediff)
 
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):
+    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
         """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
         diff = float(self.parsedOut['statediff'])
         digits = max(int(numpy.ceil(numpy.log10(abs(diff)) * tolerance_factor)), 1)
@@ -283,10 +279,7 @@ class OOPSStateDiffExpert(OOPSTestExpert):
                 "significant_digits":str(int(digits))}
 
     def summary(self):
-        return {'States diff':float(self.parsedOut['statediff']),
-                'Expected states diff':float(self.parsedOut['exp_statediff']),
-                'Digits':float(self.parsedOut['digits']),
-                'as EXPECTED_RESULT':self.as_EXPECTED_RESULT()}
+        return {'States diff':float(self.parsedOut['statediff'])}
 
     @classmethod
     def compare_2summaries(cls, test, ref,
@@ -330,7 +323,7 @@ class OOPSVariancesExpert(OOPSTestExpert):
     _re_exp_var = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_var>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
     _re_test = re.compile(_re_var + _re_exp_var)
 
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):
+    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
         """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
         var = float(self.parsedOut['var'])
         digits = max(int(numpy.ceil(numpy.log10(var) * tolerance_factor)), 1)
@@ -338,10 +331,7 @@ class OOPSVariancesExpert(OOPSTestExpert):
                 "significant_digits":str(int(digits))}
 
     def summary(self):
-        return {'Variances':float(self.parsedOut['var']),
-                'Expected Variances':float(self.parsedOut['exp_var']),
-                'Digits':float(self.parsedOut['digits']),
-                'as EXPECTED_RESULT':self.as_EXPECTED_RESULT()}
+        return {'Variances':float(self.parsedOut['var'])}
 
     @classmethod
     def compare_2summaries(cls, test, ref,

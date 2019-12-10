@@ -119,7 +119,7 @@ class ExpertBoard(object):
         """State about the comparison to reference."""
         comp_summary = getattr(self, which_summary)
         if len(comp_summary) > 0:
-            status_order = ['-', '?', 'OK', 'KO', '!', '+']
+            status_order = ['-', '0', '?', 'OK', 'KO', '!', '+']
             # by default, unknown status (e.g. if no expert has a Validated key)
             comp_summary['comparisonStatus'] = {'symbol':'-',
                                                 'short':'- No expert -',
@@ -147,6 +147,8 @@ class ExpertBoard(object):
                     status = {'symbol':'!',
                               'short':'! Comp Issue !',
                               'text':'To be checked: at least one technical problem occurred in comparison'}
+                elif e.kind in comp_summary and comp_summary[e.kind].get('comparisonStatus', {}).get('symbol') == '0':
+                    status = comp_summary[e.kind].get('comparisonStatus')
                 else:
                     # expert present but no Validated key available
                     status = {'symbol':'?',
