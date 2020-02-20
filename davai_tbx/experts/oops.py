@@ -7,7 +7,7 @@ import re
 import numpy
 
 from . import TextOutputExpert, ExpertError
-from .util import ppp, ppi, FLOAT_RE
+from .util import ppp, ppi, FLOAT_RE, EXTENDED_FLOAT_RE
 from .thresholds import (JO,
                          JOAD_DIGITS,
                          STATESDIFF,
@@ -69,16 +69,9 @@ class OOPSJoExpert(OOPSTestExpert):
     )
 
     # Jo & expected Jo
-    _re_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Jo = (?P<jo>\d+\.\d+)\]\]></Message>'
-    _re_exp_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_jo>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
-    _re_test = re.compile(_re_jo + _re_exp_jo)
-
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
-        """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
-        jo = float(self.parsedOut['jo'])
-        digits = max(int(numpy.ceil(numpy.log10(jo) * tolerance_factor)), 1)
-        return {"expected_Jo": str(int(jo)),  # empirical: rounded
-                "significant_digits":str(int(digits))}
+    _re_jo = '.*\[CDATA\[Jo = (?P<jo>\d+\.\d+)\]\].*'
+    #_re_exp_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_jo>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
+    _re_test = re.compile(_re_jo)  # + _re_exp_jo)
 
     def summary(self):
         return {'Jo':float(self.parsedOut['jo'])}
@@ -124,13 +117,8 @@ class OOPSJoADExpert(OOPSTestExpert):
     )
 
     # Adjoint test  # CLEANME: le (D|d) est une scorie
-    _re_ad = '<Message file=".+" line="\d+"><!\[CDATA\[dx1\.dx2 = (?P<dx1dx2>-?\d+\.\d+(e(\+|-)\d+)?) dy1\.dy2 = (?P<dy1dy2>-?\d+\.\d+(e(\+|-)\d+)?) (D|d)igits = (?P<digits>-?\d+\.\d+|inf)\]\]></Message>'
+    _re_ad = '.*\[CDATA\[dx1\.dx2 = (?P<dx1dx2>-?\d+\.\d+(e(\+|-)\d+)?) dy1\.dy2 = (?P<dy1dy2>-?\d+\.\d+(e(\+|-)\d+)?) (D|d)igits = (?P<digits>-?\d+\.\d+|inf)\]\].*'
     _re_test = re.compile(_re_ad)
-
-    def as_EXPECTED_RESULT(self):  # TODO: CLEANME
-        """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
-        digits = min(float(self.parsedOut['digits']), 16)
-        return {"significant_digits":str(int(digits))}
 
     def summary(self):
         return {'dx1.dx2':float(self.parsedOut['dx1dx2']),
@@ -175,15 +163,15 @@ class OOPSJoTLExpert(OOPSTestExpert):  # FIXME: works ?
 
     _re_signature = 'WRITE_OBSVEC: CDNAME == obs_diags_1@update_(?P<nupdate>\d+) - write to ODB'
     _re_stats46 = re.compile('WRITE_OBSVEC: MIN,MAX,AVG=\s*' +
-                             '(?P<min>' + FLOAT_RE + ')\s+' +
-                             '(?P<max>' + FLOAT_RE + ')\s+' +
-                             '(?P<avg>' + FLOAT_RE + ')\s*')
+                             '(?P<min>' + EXTENDED_FLOAT_RE + ')\s+' +
+                             '(?P<max>' + EXTENDED_FLOAT_RE + ')\s+' +
+                             '(?P<avg>' + EXTENDED_FLOAT_RE + ')\s*')
     _re_stats47 = re.compile('WRITE_OBSVEC: VALUES,NOT RMDI,MIN,MAX,AVG=\s*' +
                              '(?P<values>\d+)\s+' +
                              '(?P<not_rmdi>\d+)\s+' +
-                             '(?P<min>' + FLOAT_RE + ')\s+' +
-                             '(?P<max>' + FLOAT_RE + ')\s+' +
-                             '(?P<avg>' + FLOAT_RE + ')\s*')
+                             '(?P<min>' + EXTENDED_FLOAT_RE + ')\s+' +
+                             '(?P<max>' + EXTENDED_FLOAT_RE + ')\s+' +
+                             '(?P<avg>' + EXTENDED_FLOAT_RE + ')\s*')
 
     def _parse(self):
         """
@@ -266,17 +254,10 @@ class OOPSStateDiffExpert(OOPSTestExpert):
         )
     )
 
-    # Diff between 2 states  # CLEANME: le .* est une scorie dans OOPS
-    _re_statediff = '<Message file=".+" line="\d+"><!\[CDATA\[.*\|\|((Mx-x)|(x0-x2))\|\| = (?P<statediff>(\+|\-)*\d+(\.\d+)*).*\]\]></Message>'
-    _re_exp_statediff = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_statediff>(\+|\-)*\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+(\.\d+)*)\]\]></Message>'
-    _re_test = re.compile(_re_statediff + _re_exp_statediff)
-
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
-        """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
-        diff = float(self.parsedOut['statediff'])
-        digits = max(int(numpy.ceil(numpy.log10(abs(diff)) * tolerance_factor)), 1)
-        return {"expected_diff": str(diff),
-                "significant_digits":str(int(digits))}
+    # Diff between 2 states
+    _re_statediff = '.*\[CDATA\[.*\|\|((Mx-x)|(x0-x2))\|\| = (?P<statediff>(\+|\-)*\d+(\.\d+)*).*'
+    #_re_exp_statediff = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_statediff>(\+|\-)*\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+(\.\d+)*)\]\]></Message>'
+    _re_test = re.compile(_re_statediff)  # + _re_exp_statediff)
 
     def summary(self):
         return {'States diff':float(self.parsedOut['statediff'])}
@@ -319,16 +300,8 @@ class OOPSVariancesExpert(OOPSTestExpert):
     )
 
     # Jo & expected Jo
-    _re_var = '<Message file=".+" line="\d+"><!\[CDATA\[variances = (?P<var>\d+\.\d+)\]\]></Message>'
-    _re_exp_var = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_var>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
-    _re_test = re.compile(_re_var + _re_exp_var)
-
-    def as_EXPECTED_RESULT(self, tolerance_factor=EXPECTED_RESULT_TOLERANCE_FACTOR):  # TODO: CLEANME
-        """From the parsed result, prepare a new EXPECTED_RESULT variable for OOPS."""
-        var = float(self.parsedOut['var'])
-        digits = max(int(numpy.ceil(numpy.log10(var) * tolerance_factor)), 1)
-        return {"expected_variances": str(int(var)),  # empirical: rounded
-                "significant_digits":str(int(digits))}
+    _re_var = '.*\[CDATA\[variances = (?P<var>\d+\.\d+)\]\].*'
+    _re_test = re.compile(_re_var)
 
     def summary(self):
         return {'Variances':float(self.parsedOut['var'])}

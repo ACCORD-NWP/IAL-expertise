@@ -6,6 +6,12 @@ Useful functionalities for Experts.
 from __future__ import print_function, absolute_import, division, unicode_literals
 
 FLOAT_RE = '(\+|\-)*((\d+(\.\d*)*)|(\.\d+))(E(\+|\-)\d+)*'
+NAN_RE = '(NaN)|(nan)|(NAN)'
+INFINITY_RE = '(\+|\-)*Infinity'
+EXTENDED_FLOAT_RE = '({})'.format('|'.join(['({})'.format(expr)
+                                            for expr in (FLOAT_RE,
+                                                         NAN_RE,
+                                                         INFINITY_RE)]))
 
 
 def difftree(test, ref, fatal_exceptions=False):
