@@ -96,16 +96,19 @@ def write_xpinfo(user, xpid, ref_xpid, usecase, commonenv, commonenv_details,
 
 
 class XPMetadata(object):
-
+    """Collect metadata about XP and save it."""
     env_catalog_variables = ('APPENV', 'APPENV_LAM', 'APPENV_GLOBAL',
                              'APPENV_CLIM', 'COMMONENV')
 
     def __init__(self, xpid):
+        ref_xpid = os.environ.get('REF_XPID')
+        if ref_xpid == xpid:
+            ref_xpid = None
         self._dict = {'xpid':xpid,
                       'initial_time_of_launch':date.utcnow().isoformat().split('.')[0],
                       'user':os.environ['USER'],
                       # absent-safe
-                      'ref_xpid':os.environ.get('REF_XPID'),
+                      'ref_xpid':ref_xpid,
                       'usecase':os.environ.get('USECASE'),
                       'git_branch':os.environ.get('GIT_BRANCH'),
                       'comment':os.environ.get('COMMENT'),
@@ -119,43 +122,44 @@ class XPMetadata(object):
             s = os.environ.get(k)
             if s:
                 self.set(k.lower(), s)
-    
+        self._set_details()
+
     def set(self, k, v):
         self._dict[k] = v
-    
+
     def get(self, k=None):
         if k is None:
             return copy.copy(self._dict)
         else:
             return self._dict[k]
-    
-    def which_env_catalog_details(self):
+
+    @property
+    def _which_env_catalog_details(self):
+        """Get keys and values of necessary env-catalogs to be detailed."""
         return {k.lower():self._dict.get(k.lower())
                 for k in self.env_catalog_variables
                 if k.lower() in self._dict}
     
-    def set_env_catalog_details(self, k, details):
-        self._dict['{}_details'.format(k.lower())] = '<br>'.join(details)
+    @classmethod
+    def _get_env_catalog_details(cls, env):
+        from gco.tools import uenv, genv
+        if any([env.startswith(scheme) for scheme in ('uget:', 'uenv:')]):
+            # uenv
+            details = uenv.nicedump(env,
+                                    scheme='uget',
+                                    netloc='uget.multi.fr')
+        else:
+            # genv
+            details = ['%s="%s"' % (k, v)
+                       for (k, v) in genv.autofill(env).items()]
+        return details
+    
+    def _set_details(self):
+        for k, env in self._which_env_catalog_details.items():
+            details = self._get_env_catalog_details(env)
+            self._dict['{}_details'.format(k.lower())] = '<br>'.join(details)
     
     def write(self):
+        """Dump in file (xpinfo.json)."""
         with open('xpinfo.json', 'w') as out:
-            json.dump(metadata, out, indent=4, sort_keys=True)
-
-def XP_which_env_to_pull():
-    """Return a list of genv/uenv to be pulled."""
-    envs = {}
-    for k in :
-        e = os.environ.get(k)
-        if e:
-            envs[k] = e
-    return envs
-
-
-def XP_metadata_collect(metadata):
-    """Collect a series of metadata from environment variables."""
-    
-    for k, e in XP_which_env_to_pull().items():
-        metadata[k.lower()] = e
-    return metadata
-
-def XPinfo_write():
+            json.dump(self._dict, out, indent=4, sort_keys=True)
