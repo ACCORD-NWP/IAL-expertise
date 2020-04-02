@@ -5,7 +5,7 @@ Useful functionalities for Experts.
 """
 from __future__ import print_function, absolute_import, division, unicode_literals
 
-FLOAT_RE = '(\+|\-)*((\d+(\.\d*)*)|(\.\d+))(E(\+|\-)\d+)*'
+FLOAT_RE = '(\+|\-)*((\d+(\.\d*)*)|(\.\d+))((E|e)(\+|\-)\d+)*'
 NAN_RE = '(NaN)|(nan)|(NAN)'
 INFINITY_RE = '(\+|\-)*Infinity'
 EXTENDED_FLOAT_RE = '({})'.format('|'.join(['({})'.format(expr)
@@ -84,6 +84,9 @@ comp_messages = {'missing':'!Missing in test!',
 
 #: OOPS tests sample outputs
 test_ad = '<Message file=".D[6]/test/base/TestSuiteOpObsTrajModel.h" line="153"><![CDATA[dx1.dx2 = -10551.185388577840058 dy1.dy2 = -10551.185388577810954 digits = 14.559351102071987683]]></Message>'
+test_ad2 = '<Message file=".D[83]/testsuite/TestSuiteOpObsTrajFile.h" line="175"><![CDATA[dx1.dx2 = -1.0476904596503497304e-05 dy1.dy2 = -1.0476904596503483751e-05 digits = 14.888212703032722928]]></Message> ALLOBS_OPER_MOD:OBS_OPER_DELETE instance=           1'
 test_jo = '<Message file=".D[6]/test/base/TestSuiteOpObsTrajFile.h" line="106"><![CDATA[Jo = 543801527.59527683258]]></Message><Message file=".D[6]/test/base/TestSuiteVariationalFixture.h" line="250"><![CDATA[Expected result = 543801527 Digits: 8.9607214420661822629]]></Message> ALLOBS_OPER_MOD:OBS_OPER_DELETE instance=           0'
+test_jo2 = '<Message file=".D[83]/testsuite/TestSuiteOpObsTrajFile.h" line="105"><![CDATA[Jo = 0]]></Message><Message file=".D[83]/testsuite/TestSuiteVariationalFixture.h" line="266"><![CDATA[Expected result = 9999 Digits: -0]]></Message> ALLOBS_OPER_MOD:OBS_OPER_DELETE instance=           1'
 test_diff = '<Message file=".D[6]/test/base/TestSuiteModel.h" line="133"><![CDATA[||Mx-x|| = 43411459.225849807262||Mx|| = ]]></Message><Message file=".D[6]/test/base/TestSuiteVariationalFixture.h" line="250"><![CDATA[Expected result = 43411459 Digits: 8.2837846578541558529]]></Message></TestLog>'
 test_diff2 = '<Message file=".D[6]/test/base/TestSuiteModel.h" line="98"><![CDATA[||Mx-x|| = 137534984.33869171143||Mx|| = ]]></Message><Message file=".D[6]/test/base/TestSuiteVariationalFixture.h" line="250"><![CDATA[Expected result = 9999 Digits: -4.1384250389422065908]]></Message></TestLog>'
+test_variances = '<Message file=".D[83]/testsuite/TestSuiteEnsemble.h" line="98"><![CDATA[variances = 465160482.80360126495]]></Message><Message file=".D[83]/testsuite/TestSuiteVariationalFixture.h" line="264"><![CDATA[Expected result = 9999 Digits: -4.6676369086232849526]]></Message>'

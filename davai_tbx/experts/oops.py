@@ -69,7 +69,7 @@ class OOPSJoExpert(OOPSTestExpert):
     )
 
     # Jo & expected Jo
-    _re_jo = '.*\[CDATA\[Jo = (?P<jo>\d+\.\d+)\]\].*'
+    _re_jo = '.*\[CDATA\[Jo = (?P<jo>' + EXTENDED_FLOAT_RE + ')\]\].*'
     #_re_exp_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_jo>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
     _re_test = re.compile(_re_jo)  # + _re_exp_jo)
 
@@ -117,7 +117,9 @@ class OOPSJoADExpert(OOPSTestExpert):
     )
 
     # Adjoint test  # CLEANME: le (D|d) est une scorie
-    _re_ad = '.*\[CDATA\[dx1\.dx2 = (?P<dx1dx2>-?\d+\.\d+(e(\+|-)\d+)?) dy1\.dy2 = (?P<dy1dy2>-?\d+\.\d+(e(\+|-)\d+)?) (D|d)igits = (?P<digits>-?\d+\.\d+|inf)\]\].*'
+    _re_ad = ('.*\[CDATA\[dx1\.dx2 = (?P<dx1dx2>' + EXTENDED_FLOAT_RE +
+              ') dy1\.dy2 = (?P<dy1dy2>' + EXTENDED_FLOAT_RE +
+              ') (D|d)igits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\]\].*')
     _re_test = re.compile(_re_ad)
 
     def summary(self):
