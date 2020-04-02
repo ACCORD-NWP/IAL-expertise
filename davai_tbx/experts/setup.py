@@ -9,7 +9,7 @@ import six
 import re
 
 from .util import EXTENDED_FLOAT_RE
-from . import TextOutputExport
+from . import TextOutputExpert
 
 
 class SetupExpert(TextOutputExpert):
@@ -37,7 +37,7 @@ class SetupExpert(TextOutputExpert):
     END_SIGNATURE = "------ END OF SETUPS at level 0 ---------------------------------------"
 
     KEY = '\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
-    VAL = '(' + util.EXTENDED_FLOAT_RE + '|T|F|\*+'+ ')'
+    VAL = '(' + EXTENDED_FLOAT_RE + '|T|F|\*+'+ ')'
     VALS = VAL + '((\s|,)*' + VAL + ')*'
     REC_KV = re.compile('.*(\s|,|^)(?P<key>' + KEY + ')\s*=\s*(?P<val>' + VALS + ')(\s|,|$).*')
     REC_K_EQ_ENDLINE = re.compile('.*(\s|,|^)(?P<key>' + KEY + ')\s*=\s*$')
