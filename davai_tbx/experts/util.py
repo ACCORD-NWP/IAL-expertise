@@ -7,7 +7,7 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 FLOAT_RE = '(\+|\-)*((\d+(\.\d*)*)|(\.\d+))((E|e)(\+|\-)\d+)*'
 NAN_RE = '(NaN)|(nan)|(NAN)'
-INFINITY_RE = '(\+|\-)*Infinity'
+INFINITY_RE = '(\+|\-)*((Infinity)|(inf)|(Inf))'
 EXTENDED_FLOAT_RE = '({})'.format('|'.join(['({})'.format(expr)
                                             for expr in (FLOAT_RE,
                                                          NAN_RE,

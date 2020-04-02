@@ -70,7 +70,6 @@ class OOPSJoExpert(OOPSTestExpert):
 
     # Jo & expected Jo
     _re_jo = '.*\[CDATA\[Jo = (?P<jo>' + EXTENDED_FLOAT_RE + ')\]\].*'
-    #_re_exp_jo = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_jo>\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+\.\d+)\]\]></Message>'
     _re_test = re.compile(_re_jo)  # + _re_exp_jo)
 
     def summary(self):
@@ -117,10 +116,10 @@ class OOPSJoADExpert(OOPSTestExpert):
     )
 
     # Adjoint test  # CLEANME: le (D|d) est une scorie
-    _re_ad = ('.*\[CDATA\[dx1\.dx2 = (?P<dx1dx2>' + EXTENDED_FLOAT_RE +
-              ') dy1\.dy2 = (?P<dy1dy2>' + EXTENDED_FLOAT_RE +
-              ') (D|d)igits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\]\].*')
-    _re_test = re.compile(_re_ad)
+    _re_test = re.compile('.*\[CDATA\[' +
+                          'dx1\.dx2 = (?P<dx1dx2>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          'dy1\.dy2 = (?P<dy1dy2>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          '(D|d)igits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
 
     def summary(self):
         return {'dx1.dx2':float(self.parsedOut['dx1dx2']),
@@ -140,7 +139,7 @@ class OOPSJoADExpert(OOPSTestExpert):
                 'mainMetrics':'Diff in common digits'}
 
 
-class OOPSJoTLExpert(OOPSTestExpert):  # FIXME: works ?
+class OOPSJoTLExpert(OOPSTestExpert):
 
     _footprint = dict(
         info = 'Read and compare *TL-test result* written by obs operator OOPS-test:test_tl in standard output file.',

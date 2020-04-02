@@ -4,4 +4,4 @@ version=$1
 rsync -av davai_tbx beaufix:~/public/davai$version/ --exclude *.pyc
 #rsync -av davai_tbx beaufix:~/.local/lib/python2.7/site-packages/ --exclude *.pyc
 #rsync -av davai_tbx /cnrm/coope/mary/.vortex/ --exclude *.pyc
-rsync -av davai_tbx sxcoope1:~mary/sync_epygram/davai$version/ --exclude *.pyc
+#rsync -av davai_tbx sxcoope1:~mary/sync_epygram/davai$version/ --exclude *.pyc
