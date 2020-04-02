@@ -47,6 +47,9 @@ class Test_oops(TestCase):
     
     def test_re_var(self):
         self.assertTrue(oops.OOPSVariancesExpert._re_test.match(util.test_variances))
+    
+    def test_interpol(self):
+        self.assertTrue(oops.OOPSInterpolExpert._re_test.match(util.test_interpol))
 
 if __name__ == '__main__':
     main(verbosity=2)

@@ -326,3 +326,43 @@ class OOPSVariancesExpert(OOPSTestExpert):
         """Compare to a reference summary: relative error in Variances."""
         return super(OOPSVariancesExpert, self)._compare(references,
                                                          validation_threshold=self.variances_validation_threshold)
+
+
+class OOPSInterpolExpert(OOPSTestExpert):
+
+    _footprint = dict(
+        info = 'Read and compare *adjoint-test result* written by oops:interpol/two_geos_test.',
+        attr = dict(
+            kind = dict(
+                values = ['oops:interpol/two_geos_test',],
+            ),
+            digits_validation_threshold = dict(
+                info = "Minimum value for the number of common digits in the AD-test.",
+                type = int,
+                optional = True,
+                default = JOAD_DIGITS,
+            ),
+        )
+    )
+
+    _re_test = re.compile('.*\[CDATA\[ADJOINT TEST \(DIRECT\):\s*' +
+                          'x\.Ft\(y\)\s*=\s*(?P<xFty>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          'y\.F\(x\)\s*=\s*(?P<yFx>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          '(D|d)igits\s*=\s*(?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
+
+    def summary(self):
+        return {'x.Ft(y)':float(self.parsedOut['xFty']),
+                'y.F(x)':float(self.parsedOut['yFx']),
+                'Digits':min(float(self.parsedOut['digits']), 16)}
+
+    @classmethod
+    def compare_2summaries(cls, test, ref, validation_threshold=JOAD_DIGITS):
+        """Compare two AD tests."""
+        digits_diff = test['Digits'] - ref['Digits']
+        return {'Validated means':'Enough digits common between x.Ft(y) and y.F(x) (scalar products); enough == as many as reference or > {}'.format(validation_threshold),
+                'Validated':int(round(digits_diff)) >= 0 or test['Digits'] >= validation_threshold,
+                'Common digits in AD-test >= reference ()'.format(ref['Digits']):int(round(digits_diff)) >= 0,
+                'Common digits in AD-test >= {}'.format(validation_threshold):test['Digits'] >= validation_threshold,
+                'Diff in common digits':ppi(int(round(digits_diff))),
+                'Float diff in common digits':digits_diff,
+                'mainMetrics':'Diff in common digits'}
