@@ -97,12 +97,13 @@ class SetupExpert(TextOutputExpert):
         self.variables = variables
         self.orphans = orphans
 
-    def _split_tables(self, string):
+    @classmethod
+    def _split_tables(cls, string):
         """Split a table of values in a string into a list."""
         string = string.strip()
-        if self.REC_VALS_SPACES.match(string):
+        if cls.REC_VALS_SPACES.match(string):
             table = [s.strip() for s in string.split() if s != '']
-        elif self.REC_VALS_COMMAS.match(string):
+        elif cls.REC_VALS_COMMAS.match(string):
             table = [s.strip() for s in string.split(',') if s != '']
         return table
 

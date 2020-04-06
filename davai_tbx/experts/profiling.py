@@ -12,7 +12,38 @@ import json
 import io
 
 from . import OutputExpert, ExpertError
-from .util import ppp
+from .util import ppp, EXTENDED_FLOAT_RE
+
+REC_PROF = re.compile('\s*(?P<Avg_pct>' + EXTENDED_FLOAT_RE + ')%\s+' +
+                      '(?P<Avg_time>' + EXTENDED_FLOAT_RE + ')\s+' +
+                      '(?P<Min_time>' + EXTENDED_FLOAT_RE + ')\s+' +
+                      '(?P<Max_time>' + EXTENDED_FLOAT_RE + ')\s+' +
+                      '(?P<St_dev>' + EXTENDED_FLOAT_RE + ')\s+' +
+                      '(?P<Imbal_pct>' + EXTENDED_FLOAT_RE + ')%\s+' +
+                      '(?P<N_of_calls>\d+) : (?P<routine>.*)$'
+                      )
+
+def _parse_profile(profile):
+    header = "  Avg-%   Avg.time   Min.time   Max.time   St.dev  Imbal-%   # of calls : Name of the routine"
+    group2header = {'Avg_pct':'Avg-%',
+                    'Avg_time':'Avg.time',
+                    'Min_time':'Min.time',
+                    'Max_time':'Max.time',
+                    'St_dev':'St.dev',
+                    'Imbal_pct':'Imbal-%',
+                    }
+    parsed = {}
+    general_info = profile[:profile.index(header)]
+    rawprofile = profile[profile.index(header):]
+    for line in rawprofile[1:]:
+        decode = REC_PROF.match(line)
+        if decode:
+            decode = decode.groupdict()
+            routine = decode.pop('routine')
+            parsed[routine] = {'# of calls':int(decode.pop('N_of_calls'))}
+            for k, v in decode.items():
+                parsed[routine][group2header[k]] = float(v)
+    return general_info, parsed, rawprofile
 
 
 class DrHook(OutputExpert):
@@ -46,7 +77,13 @@ class DrHook(OutputExpert):
             self._merge_walltime_max()
         elif self.kind.endswith('Ave'):
             self._merge_walltime_ave()
-
+    
+    def _parse_profile(self):
+        general_info, parsed, rawprofile = _parse_profile(self.merged_drhook)
+        self.rawprofile = rawprofile
+        self.general_info = general_info
+        self.parsed_profile = parsed
+    
     def summary(self):
         """Return a summary as a dict."""
         return {'Elapse time':self._get_walltime_max(),
@@ -116,6 +153,38 @@ class DrHook(OutputExpert):
             match = self._re_openmp_threads.match(l)
             if match:
                 return int(match.group('openmp'))
+    
+    def _compare_by_routine(self, other):
+        routines = set(self.parsed_profile.keys()).union(set(other.parsed_profile.keys()))
+        faster = ('None', 0.)
+        slower = ('None', 0.)
+        rel_faster = ('None', 0.)
+        rel_slower = ('None', 0.)
+        for r in routines:
+            if other.parsed_profile[r]['Max.time'] > 0.1:  # quicker routines don't matter
+                diff = self.parsed_profile[r]['Max.time'] - other.parsed_profile[r]['Max.time']
+                reldiff = diff / other.parsed_profile[r]['Max.time']
+                if diff < 0. and diff <= faster[1]:
+                    faster[1] = diff
+                    faster[0] = r
+                elif diff > 0. and diff >= slower[1]:
+                    slower[1] = diff
+                    slower[0] = r
+                if reldiff < 0. and reldiff <= rel_faster[1]:
+                    rel_faster[1] = reldiff
+                    rel_faster[0] = r
+                elif reldiff > 0. and reldiff >= rel_slower[1]:
+                    rel_slower[1] = reldiff
+                    rel_slower[0] = r
+        return {'Highest slow-down - routine':slower[0],
+                'Highest slow-down - (s)':slower[1],
+                'Highest acceleration - routine':faster[0],
+                'Highest acceleration - (s)':faster[1],
+                'Highest relative acceleration - routine':rel_faster[0],
+                'Highest relative acceleration - %':ppp(rel_faster[1]),
+                'Highest relative slow-down - routine':rel_slower[0],
+                'Highest relative slow-down - routine':rel_slower[0],
+            }
 
 
 class RSS(OutputExpert):
