@@ -15,21 +15,6 @@ from . import OutputExpert, ExpertError
 from .util import ppp, EXTENDED_FLOAT_RE
 
 
-def _parse_profile(profile):
-    header = "  Avg-%   Avg.time   Min.time   Max.time   St.dev  Imbal-%   # of calls : Name of the routine"
-    routine_profile = {}
-    general_info = profile[:profile.index(header)]
-    rawprofile = profile[profile.index(header):]
-    for line in rawprofile[1:]:
-        splitted, routine = line.split(' : ')
-        splitted = splitted.split()
-        if self.kind.endswith('Max'):
-            routine_profile[routine] = float(splitted[3])  # 'Max.time'
-        elif self.kind.endswith('Ave'):
-            routine_profile[routine] = float(splitted[1])  # 'Avg.time'
-    return general_info, routine_profile, rawprofile
-
-
 class DrHook(OutputExpert):
     """
     Handles the DrHook profiling of a job.
@@ -53,6 +38,7 @@ class DrHook(OutputExpert):
     _re_walltime = re.compile('Wall-times over all MPI-tasks \(secs\) : Min=(?P<min>\d+\.\d+), Max=(?P<max>\d+\.\d+), Avg=(?P<avg>\d+\.\d+), StDev=(?P<stdev>\d+\.\d+)')
     _re_mpi_tasks = re.compile('Number of MPI-tasks : (?P<mpi>\d+)')
     _re_openmp_threads = re.compile('Number of OpenMP-threads : (?P<openmp>\d+)')
+    _header = "  Avg-%   Avg.time   Min.time   Max.time   St.dev  Imbal-%   # of calls : Name of the routine"
 
     def _parse(self):
         """Actual parsing."""
@@ -61,13 +47,21 @@ class DrHook(OutputExpert):
             self._merge_walltime_max()
         elif self.kind.endswith('Ave'):
             self._merge_walltime_ave()
-        self._parse_profile()
+        header_index = self.merged_drhook.index(self._header)
+        self.general_info = self.merged_drhook[:header_index]
+        self.rawprofile = self.merged_drhook[header_index:]
     
-    def _parse_profile(self):
-        general_info, routine_profile, rawprofile = _parse_profile(self.merged_drhook)
-        self.rawprofile = rawprofile
-        self.general_info = general_info
-        self.routine_profile = routine_profile
+    @classmethod
+    def parse_routines(cls, drhook_kind, profile):
+        routine_profile = {}
+        for line in profile[1:-1]:  # starts with header, ends with global info
+            splitted, routine = line.split(' : ')
+            splitted = splitted.split()
+            if drhook_kind.endswith('Max'):
+                routine_profile[routine] = float(splitted[3])  # 'Max.time'
+            elif drhook_kind.endswith('Ave'):
+                routine_profile[routine] = float(splitted[1])  # 'Avg.time'
+        return routine_profile
     
     def summary(self):
         """Return a summary as a dict."""
@@ -75,26 +69,27 @@ class DrHook(OutputExpert):
                 'MPI tasks':self._get_mpi_tasksnum(),
                 'OpenMP threads':self._get_openmp_threads(),
                 'General info':self.general_info,
-                'Routines {} time'.format(self.kind[-3:]):self.routine_profile,
                 'DrHookProfile':self.rawprofile}
 
     @classmethod
-    def compare_2summaries(cls, test, ref):
+    def compare_2summaries(cls, test, ref, drhook_kind):
         """
         Compare 2 summaries: absolute and relative difference in Elapse time.
         """
         elapse_diff = test['Elapse time'] - ref['Elapse time']
         reldiff = elapse_diff / ref['Elapse time']
-        return {'Diff in Elapse time':elapse_diff,
-                'Relative diff in Elapse time':ppp(reldiff),
-                'mainMetrics':'Relative diff in Elapse time'}
+        comparison = {'Diff in Elapse time':elapse_diff,
+                      'Relative diff in Elapse time':ppp(reldiff),
+                      'mainMetrics':'Relative diff in Elapse time'}
+        comparison.update(cls.compare_by_routine(test, ref, drhook_kind))
+        return comparison
 
     def _compare(self, reference):
         """
         Compare to a reference summary: absolute and relative difference
         in Elapse time.
         """
-        return self._compare_summaries(reference)
+        return self._compare_summaries(reference, drhook_kind=self.kind)
 
     # inner methods ############################################################
     def _find_drhookprof(self):
@@ -108,7 +103,7 @@ class DrHook(OutputExpert):
             raise ExpertError('No drhook files found.')
 
     def _merge_walltime(self, tool):
-        self.merged_drhook = subprocess.check_output([tool,] + self.drhookfiles).split('\n')
+        self.merged_drhook = subprocess.check_output([tool,] + self.drhookfiles).split('\n')[:-1]  # to remove trailing empty line
 
     def _merge_walltime_ave(self):
         """Merge walltime of inner routines (self) by the average."""
@@ -141,16 +136,19 @@ class DrHook(OutputExpert):
             if match:
                 return int(match.group('openmp'))
     
-    def _compare_by_routine(self, other):
-        routines = set(self.routine_profile.keys()).union(set(other.routine_profile.keys()))
-        faster = ('None', 0.)
-        slower = ('None', 0.)
-        rel_faster = ('None', 0.)
-        rel_slower = ('None', 0.)
+    @classmethod
+    def compare_by_routine(cls, test_summary, ref_summary, drhook_kind):
+        test_routine_profile = cls.parse_routines(drhook_kind, test_summary['DrHookProfile'])
+        ref_routine_profile = cls.parse_routines(drhook_kind, ref_summary['DrHookProfile'])
+        routines = set(test_routine_profile.keys()).intersection(set(ref_routine_profile.keys()))
+        faster = ['None', 0.]
+        slower = ['None', 0.]
+        rel_faster = ['None', 0.]
+        rel_slower = ['None', 0.]
         for r in routines:
-            if other.routine_profile[r] > 0.001:  # quicker routines don't matter
-                diff = self.routine_profile[r] - other.routine_profile[r]
-                reldiff = diff / other.routine_profile[r]
+            if ref_routine_profile[r] > 0.001:  # quicker routines don't matter
+                diff = test_routine_profile[r] - ref_routine_profile[r]
+                reldiff = diff / ref_routine_profile[r]
                 if diff < 0. and diff <= faster[1]:
                     faster[1] = diff
                     faster[0] = r
