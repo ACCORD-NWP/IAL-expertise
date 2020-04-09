@@ -161,14 +161,26 @@ class DrHook(OutputExpert):
                 elif reldiff > 0. and reldiff >= rel_slower[1]:
                     rel_slower[1] = reldiff
                     rel_slower[0] = r
+        def nicet(d,t,r):
+            return '{:.3f} (ref:{}s => test:{}s)'.format(d,r,t)
+        def nicep(d,t,r):
+            return '{} (ref:{}s => test:{}s)'.format(d,r,t)
         return {'Highest slow-down - routine':slower[0],
-                'Highest slow-down - (s)':slower[1],
+                'Highest slow-down':nice(slower[1],
+                                         test_routine_profile[r],
+                                         ref_routine_profile[r]),
                 'Highest acceleration - routine':faster[0],
-                'Highest acceleration - (s)':faster[1],
+                'Highest acceleration':nice(faster[1],
+                                            test_routine_profile[r],
+                                            ref_routine_profile[r]),
                 'Highest relative acceleration - routine':rel_faster[0],
-                'Highest relative acceleration - %':ppp(rel_faster[1]),
+                'Highest relative acceleration':nicep(ppp(rel_faster[1]),
+                                                      test_routine_profile[r],
+                                                      ref_routine_profile[r]),
                 'Highest relative slow-down - routine':rel_slower[0],
-                'Highest relative slow-down - %':ppp(rel_slower[1]),
+                'Highest relative slow-down':nicep(ppp(rel_slower[1]),
+                                                   test_routine_profile[r],
+                                                   ref_routine_profile[r]),
             }
 
 
