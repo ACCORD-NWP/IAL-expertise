@@ -160,9 +160,14 @@ class SetupExpert(TextOutputExpert):
         for k in other.variables.keys():
             if k not in self.variables.keys():
                 lost_vars[k] = other.variables[k]
-        return {'New variables':new_vars,
-                'Lost variables':lost_vars,
-                'Modified variables':modified_vars,
+        comp = {'Identical':len(new_vars) + len(lost_vars) + len(modified_vars) == 0,
                 'Number of new variables':len(new_vars),
                 'Number of lost variables':len(lost_vars),
                 'Number of modified variables':len(modified_vars)}
+        if len(new_vars) != 0:
+            comp['New variables'] = new_vars
+        if len(lost_vars) != 0:
+            comp['Lost variables'] = lost_vars
+        if len(modified_vars) != 0:
+            comp['Modified variables'] = modified_vars
+        return comp

@@ -146,7 +146,7 @@ class ExpertBoard(object):
                     # else, if we found at least one comparison failure, raise it as status
                     status = {'symbol':'!',
                               'short':'! Comp Issue !',
-                              'text':'To be checked: at least one technical problem occurred in comparison'}
+                              'text':'To be checked: at least one technical problem occurred in comparison ({})'.format(e.kind)}
                 elif e.kind in comp_summary and comp_summary[e.kind].get('comparisonStatus', {}).get('symbol') == '0':
                     status = comp_summary[e.kind].get('comparisonStatus')
                 else:
