@@ -144,6 +144,7 @@ class SetupExpert(TextOutputExpert):
         ref_listing = self.filter_one_resource(references, rkind='plisting')
         ref_setup_expert = SetupExpert(kind=self.kind,
                                        output=ref_listing.container.localpath())
+        ref_setup_expert.parse()
         return self._comp(ref_setup_expert)
         
     

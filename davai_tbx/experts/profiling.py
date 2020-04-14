@@ -69,7 +69,7 @@ class DrHook(OutputExpert):
                 'MPI tasks':self._get_mpi_tasksnum(),
                 'OpenMP threads':self._get_openmp_threads(),
                 'General info':self.general_info,
-                'DrHookProfile':self.rawprofile}
+                '_DrHookProfile':self.rawprofile}
 
     @classmethod
     def compare_2summaries(cls, test, ref, drhook_kind):
@@ -138,8 +138,8 @@ class DrHook(OutputExpert):
     
     @classmethod
     def compare_by_routine(cls, test_summary, ref_summary, drhook_kind):
-        test_routine_profile = cls.parse_routines(drhook_kind, test_summary['DrHookProfile'])
-        ref_routine_profile = cls.parse_routines(drhook_kind, ref_summary['DrHookProfile'])
+        test_routine_profile = cls.parse_routines(drhook_kind, test_summary['_DrHookProfile'])
+        ref_routine_profile = cls.parse_routines(drhook_kind, ref_summary['_DrHookProfile'])
         routines = set(test_routine_profile.keys()).intersection(set(ref_routine_profile.keys()))
         faster = ['None', 0.]
         slower = ['None', 0.]
@@ -166,21 +166,21 @@ class DrHook(OutputExpert):
         def nicep(d,t,r):
             return '{} (ref:{}s => test:{}s)'.format(d,r,t)
         return {'Highest slow-down - routine':slower[0],
-                'Highest slow-down':nice(slower[1],
-                                         test_routine_profile[r],
-                                         ref_routine_profile[r]),
+                'Highest slow-down':nicet(slower[1],
+                                          test_routine_profile[slower[0]],
+                                          ref_routine_profile[slower[0]]),
                 'Highest acceleration - routine':faster[0],
-                'Highest acceleration':nice(faster[1],
-                                            test_routine_profile[r],
-                                            ref_routine_profile[r]),
+                'Highest acceleration':nicet(faster[1],
+                                             test_routine_profile[faster[0]],
+                                             ref_routine_profile[faster[0]]),
                 'Highest relative acceleration - routine':rel_faster[0],
                 'Highest relative acceleration':nicep(ppp(rel_faster[1]),
-                                                      test_routine_profile[r],
-                                                      ref_routine_profile[r]),
+                                                      test_routine_profile[rel_faster[0]],
+                                                      ref_routine_profile[rel_faster[0]]),
                 'Highest relative slow-down - routine':rel_slower[0],
                 'Highest relative slow-down':nicep(ppp(rel_slower[1]),
-                                                   test_routine_profile[r],
-                                                   ref_routine_profile[r]),
+                                                   test_routine_profile[rel_slower[0]],
+                                                   ref_routine_profile[rel_slower[0]]),
             }
 
 
