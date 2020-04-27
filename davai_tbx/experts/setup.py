@@ -34,6 +34,9 @@ class SetupExpert(TextOutputExpert):
         )
     )
 
+    side_expert = True
+    active = False
+
     END_SIGNATURE = "------ END OF SETUPS at level 0 ---------------------------------------"
 
     KEY = '\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
@@ -48,9 +51,13 @@ class SetupExpert(TextOutputExpert):
 
     def _parse(self):
         listing = self._read_txt_output()
-        end_of_setup = listing.index(self.END_SIGNATURE)
-        self.parsedOut = listing[:end_of_setup]
-        self._variables_parse()
+        try:
+            end_of_setup = listing.index(self.END_SIGNATURE)
+        except Exception as e:
+            pass
+        else:
+            self.parsedOut = listing[:end_of_setup]
+            self._variables_parse()
 
     def _variables_parse(self):
         """Parse listing, looking for 'key = value' schemes."""
@@ -96,6 +103,7 @@ class SetupExpert(TextOutputExpert):
                     break
         self.variables = variables
         self.orphans = orphans
+        self.active = True
 
     @classmethod
     def _split_tables(cls, string):
@@ -127,10 +135,13 @@ class SetupExpert(TextOutputExpert):
         return table
 
     def summary(self):
-        summary = {'Orphan variables (not able to get values)':self.orphans,
-                   'Number of parsed Variables':len(self.variables)}
-        if self.all_vars_in_summary:
-            summary['Variables'] = self.variables
+        if self.active:
+            summary = {'Orphan variables (not able to get values)':self.orphans,
+                       'Number of parsed Variables':len(self.variables)}
+            if self.all_vars_in_summary:
+                summary['Variables'] = self.variables
+        else:
+            summary = {'Deactivated at runtime':'Regular Setups pattern did not match'}
         return summary
     
     def _compare(self, references):
@@ -144,30 +155,37 @@ class SetupExpert(TextOutputExpert):
         ref_listing = self.filter_one_resource(references, rkind='plisting')
         ref_setup_expert = SetupExpert(kind=self.kind,
                                        output=ref_listing.container.localpath())
+        ref_setup_expert.parse()
         return self._comp(ref_setup_expert)
         
     
     def _comp(self, other):
-        new_vars = {}
-        lost_vars = {}
-        modified_vars = {}
-        for k in self.variables.keys():
-            if k not in other.variables:
-                new_vars[k] = self.variables[k]
-            elif self.variables[k] != other.variables[k]:
-                modified_vars[k] = {'ref':other.variables[k],
-                                    'test':self.variables[k]}
-        for k in other.variables.keys():
-            if k not in self.variables.keys():
-                lost_vars[k] = other.variables[k]
-        comp = {'Identical':len(new_vars) + len(lost_vars) + len(modified_vars) == 0,
-                'Number of new variables':len(new_vars),
-                'Number of lost variables':len(lost_vars),
-                'Number of modified variables':len(modified_vars)}
-        if len(new_vars) != 0:
-            comp['New variables'] = new_vars
-        if len(lost_vars) != 0:
-            comp['Lost variables'] = lost_vars
-        if len(modified_vars) != 0:
-            comp['Modified variables'] = modified_vars
+        if other.active:
+            if self.active:
+                new_vars = {}
+                lost_vars = {}
+                modified_vars = {}
+                for k in self.variables.keys():
+                    if k not in other.variables:
+                        new_vars[k] = self.variables[k]
+                    elif self.variables[k] != other.variables[k]:
+                        modified_vars[k] = {'ref':other.variables[k],
+                                            'test':self.variables[k]}
+                for k in other.variables.keys():
+                    if k not in self.variables.keys():
+                        lost_vars[k] = other.variables[k]
+                comp = {'Identical':len(new_vars) + len(lost_vars) + len(modified_vars) == 0,
+                        'Number of new variables':len(new_vars),
+                        'Number of lost variables':len(lost_vars),
+                        'Number of modified variables':len(modified_vars)}
+                if len(new_vars) != 0:
+                    comp['New variables'] = new_vars
+                if len(lost_vars) != 0:
+                    comp['Lost variables'] = lost_vars
+                if len(modified_vars) != 0:
+                    comp['Modified variables'] = modified_vars
+            else:
+                comp = {'No setup available in test':self.summary()['Deactivated at runtime']}
+        else:
+            comp = other.summary()
         return comp
