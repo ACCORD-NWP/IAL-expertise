@@ -64,7 +64,7 @@ class NormsChecker(OutputExpert):
         )
     )
 
-    _modes = {'all':'Norms at each step',
+    _modes = {'all':'_Norms at each step',
               'last':'Last step norms',
               'last_spectral':'Last step with spectral norms'}
 
@@ -83,7 +83,7 @@ class NormsChecker(OutputExpert):
         else:
             key_suffix = ''
         if self.mode == 'all':
-            summary['Norms at each step' + key_suffix] = normset
+            summary['_Norms at each step' + key_suffix] = normset
         elif self.mode == 'last':
             summary['Last step norms' + key_suffix] = normset[-1]
         elif self.mode == 'last_spectral':
