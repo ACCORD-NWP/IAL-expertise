@@ -13,6 +13,8 @@ import os
 
 from bronx.stdtypes import date
 
+from . import __version__
+
 
 class TaskSummary(dict):
     """
@@ -106,6 +108,7 @@ class XPMetadata(object):
             ref_xpid = None
         self._dict = {'xpid':xpid,
                       'initial_time_of_launch':date.utcnow().isoformat().split('.')[0],
+                      'davai_tbx':__version__,
                       'user':os.environ['USER'],
                       # absent-safe
                       'ref_xpid':ref_xpid,

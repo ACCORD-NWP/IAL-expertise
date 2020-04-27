@@ -151,7 +151,7 @@ class NormsChecker(OutputExpert):
                    'Bit-reproducible':worst_digit <= NORMSDIGITS_BITREPRO,
                    'mainMetrics':'Maximum different digits'}
         if not summary['Validated']:
-            summary['All Norms Compared'] = comp.read().split('\n')
+            summary['_Norms Compared (all)'] = comp.read().split('\n')
         if plot_spectral:
             svg = 'spnorms.svg'
             arpifs_listings.norms.compare_normsets(testset, refset, mode='plot',
@@ -159,7 +159,7 @@ class NormsChecker(OutputExpert):
                                                    plot_out=svg)
             with io.open(svg, 'r') as s:
                 svg = s.readlines()
-            summary['Spectral norms evolution graph (SVG)'] = ''.join([l.strip() for l in svg])  # condensed
+            summary['Graph: Spectral norms evolution (SVG)'] = ''.join([l.strip() for l in svg])  # condensed
         return summary
 
     def _compare(self, references):

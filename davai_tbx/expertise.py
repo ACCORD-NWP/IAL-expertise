@@ -52,15 +52,20 @@ class ExpertBoard(object):
 
     def process(self, consistency=None, continuity=None):
         """Process experts. Cf. :meth:`compare` for arguments."""
+        logger.info("Expertise: parsing start.")
         self.parse()
+        logger.info("Expertise: parsing end.")
         if consistency or continuity:  # at least one provided and not empty
+            logger.info("Expertise: comparison start.")
             self.compare(consistency, continuity)
+            logger.info("Expertise: comparison end.")
         else:
-            logger.info('No reference resource available: no comparison processed.')
+            logger.info('Expertise: no reference resource available => no comparison processed.')
             self._notify_no_ref_resource('consistency')
             self._notify_no_ref_resource('continuity')
         self.task_summary['Updated'] = date.utcnow().isoformat().split('.')[0]
         self.dump()
+        logger.info("Expertise: dumped to file.")
 
     def add_expert(self, expert_kwargs):
         """Instanciate expert and register it to ExpertBoard."""

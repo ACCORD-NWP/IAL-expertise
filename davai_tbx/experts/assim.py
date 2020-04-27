@@ -81,17 +81,25 @@ class JoTable(OutputExpert):
             maximal differences (diff/reldiff of n, jo, jo/n) are lower than
             associated threshold
         """
-        diff = test.compute_diff(ref)
-        maxdiff = test.maxdiff(ref)
-        return {'All comparisons':diff,
-                'Maximum differences':maxdiff,
-                'Maximum Relative diff in Jo/n':ppp(maxdiff['jo/n']['reldiff']),
-                'Validated means':"Maximum errors lower than thresholds: {}".format(str(validation_thresholds)),
-                'Validated':all([all([abs(maxdiff[p]['diff']) <= validation_thresholds[p]['diff'] for p in maxdiff.keys()]),
-                                 all([abs(maxdiff[p]['reldiff']) <= validation_thresholds[p]['reldiff'] for p in maxdiff.keys()])
-                                 ]),
-                'Bit-reproducible':all([abs(maxdiff[p]['diff']) <= epsilon for p in maxdiff.keys()]),
-                'mainMetrics':'Maximum Relative diff in Jo/n'}
+        if len(ref) > 0:
+            if len(test) > 0:
+                diff = test.compute_diff(ref)
+                maxdiff = test.maxdiff(ref)
+                comp = {'All comparisons':diff,
+                        'Maximum differences':maxdiff,
+                        'Maximum Relative diff in Jo/n':ppp(maxdiff['jo/n']['reldiff']),
+                        'Validated means':"Maximum errors lower than thresholds: {}".format(str(validation_thresholds)),
+                        'Validated':all([all([abs(maxdiff[p]['diff']) <= validation_thresholds[p]['diff'] for p in maxdiff.keys()]),
+                                         all([abs(maxdiff[p]['reldiff']) <= validation_thresholds[p]['reldiff'] for p in maxdiff.keys()])
+                                         ]),
+                        'Bit-reproducible':all([abs(maxdiff[p]['diff']) <= epsilon for p in maxdiff.keys()]),
+                        'mainMetrics':'Maximum Relative diff in Jo/n'}
+            else:
+                comp = {'Validated':False,
+                        'No Jo-Table available in':'test'}
+        else:
+            comp = {'No comparison':'No Jo-tables'}
+        return comp
 
     def _compare_listings(self, references,
                           validation_thresholds=JOTABLES):

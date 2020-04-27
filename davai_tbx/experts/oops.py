@@ -180,9 +180,9 @@ class OOPSJoTLExpert(OOPSTestExpert):
         """
         txtdata = self._read_txt_output()
         test_status = {}
+        n = 1
         for i, l in enumerate(txtdata):
             found = re.match(self._re_signature, l)
-            print("am:signature found")
             if found:
                 stats = ' '.join([txtdata[i - 2], txtdata[i - 1]])
                 stats_ok = self._re_stats47.match(stats)
@@ -196,7 +196,9 @@ class OOPSJoTLExpert(OOPSTestExpert):
                             stats[k] = float(v)
                         elif k in ('values', 'not_rmdi'):
                             stats[k] = int(v)
-                    test_status[found.group('nupdate')] = stats
+                    # test_status[found.group('nupdate')] = stats  # FIXME: 
+                    test_status[str(n)] = stats
+                    n += 1
                 else:
                     continue
         if len(test_status) == 0:
@@ -215,20 +217,33 @@ class OOPSJoTLExpert(OOPSTestExpert):
         """
         test = test['WRITE_OBSVEC statistics at each update']
         ref = ref['WRITE_OBSVEC statistics at each update']
+        new_u = sorted(set(test.keys()).difference(set(ref.keys())))
+        lost_u = sorted(set(ref.keys()).difference(set(test.keys())))
+        updates = sorted(set(test.keys()).intersection(set(ref.keys())))
+        keys = sorted(set(test[updates[0]].keys()).intersection(set(ref[updates[0]].keys())))
         errors = {u:{k:test[u][k] - ref[u][k]
-                     for k in test[u].keys()}
-                  for u in test.keys()}
-        rel_errors = {u:{k:(test[u][k] - ref[u][k]) / ref[u][k]
-                         for k in test[u].keys()}
-                      for u in test.keys()}
-        max_rel_err = max([max(update.values()) for update in rel_errors.values()])
-        max_abs_err = max([max(update.values()) for update in errors.values()])
-        return {'Validated means':'Absolute values of Relative errors in WRITE_OBSVEC statistics is lower or equal to {:g}%'.format(
+                     for k in keys if not numpy.isinf(ref[u][k])}
+                  for u in updates}
+        rel_errors = {u:{k:errors[u][k] / ref[u][k]
+                         for k in keys if not numpy.isinf(ref[u][k])}
+                      for u in updates}
+        max_rel_err = max([max(update.values())
+                           for update in rel_errors.values()
+                           if len(update) > 0])
+        max_abs_err = max([max(update.values())
+                           for update in errors.values()
+                           if len(update) > 0])
+        comp = {'Validated means':'Absolute values of Relative errors in WRITE_OBSVEC statistics is lower or equal to {:g}%'.format(
                 validation_threshold * 100),
                 'Validated':abs(max_rel_err) <= validation_threshold,
                 'Relative errors in WRITE_OBSVEC statistics':ppp(max_rel_err, 3),
                 'Absolute errors in WRITE_OBSVEC statistics':'{:+g}'.format(max_abs_err),
                 'mainMetrics':'Relative errors in WRITE_OBSVEC statistics'}
+        if len(new_u) > 0:
+            comp['New updates'] = new_u
+        if len(lost_u) > 0:
+            comp['Lost updates'] = lost_u
+        return comp
 
     def _compare(self, references):
         """Compare to a reference summary: relative error in JoTL."""
