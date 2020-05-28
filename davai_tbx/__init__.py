@@ -5,6 +5,6 @@ DAVAI toolbox package.
 """
 from __future__ import print_function, absolute_import, division, unicode_literals
 
-__version__ = '0.0.9'
+__version__ = '1.0.0'
 
 from . import experts, expertise

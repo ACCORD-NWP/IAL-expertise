@@ -1,4 +1,71 @@
 {
+  "davai_tbx.experts.oops.OOPSInterpolExpert": {
+    "footprint": {
+      "priority": {
+        "level": "footprints.priorities.PriorityLevel::DEFAULT (rank=1)"
+      }, 
+      "info": "Read and compare *adjoint-test result* written by oops:interpol/two_geos_test.", 
+      "only": {}, 
+      "attr": {
+        "output": {
+          "info": "The text output file to parse.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": "stdeo.0", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "optional": true
+        }, 
+        "kind": {
+          "info": "Defines what is to be expertised.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": "None", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [
+            "oops:interpol/two_geos_test"
+          ], 
+          "optional": false
+        }, 
+        "fatal_exceptions": {
+          "info": "Raise parsing/summary/compare errors.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": false, 
+          "optional": true, 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "type": "bool"
+        }, 
+        "digits_validation_threshold": {
+          "info": "Minimum value for the number of common digits in the AD-test.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": 10, 
+          "type": "int", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "optional": true
+        }
+      }, 
+      "bind": []
+    }, 
+    "bases": [
+      "davai_tbx.experts.oops.OOPSTestExpert"
+    ]
+  }, 
   "davai_tbx.experts.fields.NormsChecker": {
     "footprint": {
       "priority": {
@@ -177,6 +244,73 @@
     }, 
     "bases": [
       "davai_tbx.experts.oops.OOPSTestExpert"
+    ]
+  }, 
+  "davai_tbx.experts.setup.SetupExpert": {
+    "footprint": {
+      "priority": {
+        "level": "footprints.priorities.PriorityLevel::DEFAULT (rank=1)"
+      }, 
+      "info": "Read and compare the variables printed during the Setup.", 
+      "only": {}, 
+      "attr": {
+        "output": {
+          "info": "Output listing file name to process.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": "NODE.001_01", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "optional": true
+        }, 
+        "kind": {
+          "info": "Defines what is to be expertised.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": "None", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [
+            "setup"
+          ], 
+          "optional": false
+        }, 
+        "fatal_exceptions": {
+          "info": "Raise parsing/summary/compare errors.", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": false, 
+          "type": "bool", 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "optional": true
+        }, 
+        "all_vars_in_summary": {
+          "info": "Get all parsed variables in summary (huge).", 
+          "remap": {}, 
+          "doc_zorder": 0, 
+          "default": false, 
+          "optional": true, 
+          "outcast": [], 
+          "access": "rxx", 
+          "alias": [], 
+          "doc_visibility": "footprints.priorities.PriorityLevel::DEFAULT (rank=0)", 
+          "values": [], 
+          "type": "bool"
+        }
+      }, 
+      "bind": []
+    }, 
+    "bases": [
+      "davai_tbx.experts.TextOutputExpert"
     ]
   }, 
   "davai_tbx.experts.assim.BatorObservationsCount": {

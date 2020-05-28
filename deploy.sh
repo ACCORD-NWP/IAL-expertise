@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Script de deploiement du projet "davai" sur les calculateurs
+
+# Parse args
+if [ "$1" == "-h" ]; then
+    echo "Usage: deploy.sh [VERSION]"
+    echo "<VERSION> being the distant label, e.g. 'dev'"
+    echo "If no VERSION is provided, the numbered version found in davai_tbx/__init__.py is used."
+	echo "The distant installation is labelled davai-<VERSION>"
+    exit
+fi
+VERSION=$1
+if [ "$VERSION" == "" ]; then
+    VERSION=`grep __version__ davai_tbx/__init__.py | awk '{print $3}' | awk -F "'" '{print $2}'`
+fi
+DAVAI_DIR="public/davai-$VERSION"
+
+
+# Platforms to push onto
+beaufix=1
+prolix=1
+epona=1
+belenos=0
+taranis=0
+
+
+# Filters
+notests="--exclude tests"
+
+
+# Rsync
+logger="davai-$VERSION deployed on:\n"
+echo "------------------------------------------------------"
+if [ "$beaufix" == 1 ]; then
+  echo "...beaufix..."
+  rsync -avL * beaufix:$DAVAI_DIR $notests
+  logger="$logger - beaufix\n"
+fi
+echo "------------------------------------------------------"
+if [ "$prolix" == 1 ]; then
+  echo "...prolix..."
+  rsync -avL * prolix:$DAVAI_DIR $notests
+  logger="$logger - prolix\n"
+fi
+echo "------------------------------------------------------"
+if [ "$epona" == 1 ]; then
+  echo "...epona..."
+  rsync -avL * epona:$DAVAI_DIR $notests
+  logger="$logger - epona\n"
+fi
+echo "------------------------------------------------------"
+if [ "$belenos" == 1 ]; then
+  echo "...belenos..."
+  rsync -avL * belenos:$DAVAI_DIR $notests
+  logger="$logger - belenos\n"
+fi
+echo "------------------------------------------------------"
+if [ "$taranis" == 1 ]; then
+  echo "...taranis..."
+  rsync -avL * taranis:$DAVAI_DIR $notests
+  logger="$logger - taranis\n"
+fi
+
+
+# Log final
+echo "------------------------------------------------------"
+echo -e $logger
+
