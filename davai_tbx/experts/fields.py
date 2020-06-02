@@ -3,6 +3,7 @@
 """Fields parsers."""
 
 from __future__ import print_function, absolute_import, division, unicode_literals
+import six
 
 import io
 import numpy
@@ -249,7 +250,8 @@ class FieldsInFileExpert(OutputExpert):
                      '(?P<prefix>PREP1_interpolated)\.fa')
                  ]
     # accepted_kinds
-    filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition')
+    filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
+                 'boundary')
     # reference prefixes
     ref_prefix = 'ref.'
     cnty_prefix = 'continuity.'
@@ -435,6 +437,8 @@ def compare_2_files(test, ref,
     fields_status = {}
     max_normalized_diff = 0.
     for f in sorted(intersection):
+        if ignore_field(f):
+            continue
         try:
             (status,
              max_normalized_diff,
@@ -535,3 +539,13 @@ def compare_2_fields(test_resource, ref_resource, fid,
             validated = True
     status['Validated'] = validated
     return status, max_normalized_diff, ignore_meta
+
+
+def ignore_field(fid):
+    """Test if field is to be ignored in comparison."""
+    ignore = False
+    if isinstance(fid, six.string_types):
+        if fid.startswith('SFX._FBUF_'):
+            ignore = True
+    return ignore
+
