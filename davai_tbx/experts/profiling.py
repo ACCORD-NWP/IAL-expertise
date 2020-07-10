@@ -103,7 +103,7 @@ class DrHook(OutputExpert):
             raise ExpertError('No drhook files found.')
 
     def _merge_walltime(self, tool):
-        self.merged_drhook = subprocess.check_output([tool,] + self.drhookfiles).split('\n')[:-1]  # to remove trailing empty line
+        self.merged_drhook = subprocess.check_output([tool,] + self.drhookfiles).decode('utf-8').split('\n')[:-1]  # to remove trailing empty line
 
     def _merge_walltime_ave(self):
         """Merge walltime of inner routines (self) by the average."""
