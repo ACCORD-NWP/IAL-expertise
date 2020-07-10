@@ -20,8 +20,7 @@ DAVAI_DIR="public/davai/davai-$VERSION"
 # Platforms to push onto
 beaufix=1
 prolix=1
-epona=1
-belenos=0
+belenos=1
 taranis=0
 
 
@@ -42,12 +41,6 @@ if [ "$prolix" == 1 ]; then
   echo "...prolix..."
   rsync -avL * prolix:$DAVAI_DIR $notests
   logger="$logger - prolix\n"
-fi
-echo "------------------------------------------------------"
-if [ "$epona" == 1 ]; then
-  echo "...epona..."
-  rsync -avL * epona:$DAVAI_DIR $notests
-  logger="$logger - epona\n"
 fi
 echo "------------------------------------------------------"
 if [ "$belenos" == 1 ]; then
