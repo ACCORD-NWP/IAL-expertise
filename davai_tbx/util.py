@@ -106,6 +106,9 @@ class XPMetadata(object):
         ref_xpid = os.environ.get('REF_XPID')
         if ref_xpid == xpid:
             ref_xpid = None
+        pack = os.environ.get('PACK')
+        if pack in (None, ''):
+            pack = os.environ.get('GMKPACK_PACKNAME')
         self._dict = {'xpid':xpid,
                       'initial_time_of_launch':date.utcnow().isoformat().split('.')[0],
                       'davai_tbx':__version__,
@@ -113,9 +116,11 @@ class XPMetadata(object):
                       # absent-safe
                       'ref_xpid':ref_xpid,
                       'usecase':os.environ.get('USECASE'),
-                      'git_branch':os.environ.get('GIT_BRANCH'),
+                      'git_branch':os.environ.get('IA4H_GITREF'),  # CLEANME: to be pruned at some point
+                      'IA4H_gitref':os.environ.get('IA4H_GITREF'),
                       'comment':os.environ.get('COMMENT'),
-                      'pack':os.environ.get('PACK'),
+                      'pack':pack,  # CLEANME: to be pruned at some point
+                      'gmkpack_packname':os.environ.get('GMKPACK_PACKNAME'),
                       }
         for k in self.env_catalog_variables:
             e = os.environ.get(k)
