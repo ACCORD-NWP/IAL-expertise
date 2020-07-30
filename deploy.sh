@@ -14,7 +14,7 @@ VERSION=$1
 if [ "$VERSION" == "" ]; then
     VERSION=`grep __version__ davai_tbx/__init__.py | awk '{print $3}' | awk -F "'" '{print $2}'`
 fi
-DAVAI_DIR="public/davai/davai-$VERSION"
+DAVAI_DIR="public/davai/$VERSION"
 
 
 # Platforms to push onto
