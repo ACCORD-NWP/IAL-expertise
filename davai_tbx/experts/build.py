@@ -41,7 +41,7 @@ class GmkpackBuildExpert(OutputExpert):
         return summary
     
     def _compare(self, references, *args, **kwargs):
-        return self._compare_summaries(self, references, *args, **kwargs)
+        return self._compare_summaries(references, *args, **kwargs)
 
     @classmethod
     def compare_2summaries(cls, test, ref):
