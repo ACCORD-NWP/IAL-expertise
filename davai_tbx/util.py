@@ -106,9 +106,6 @@ class XPMetadata(object):
         ref_xpid = os.environ.get('REF_XPID')
         if ref_xpid == xpid:
             ref_xpid = None
-        pack = os.environ.get('PACK')
-        if pack in (None, ''):
-            pack = os.environ.get('GMKPACK_PACKNAME')
         self._dict = {'xpid':xpid,
                       'initial_time_of_launch':date.utcnow().isoformat().split('.')[0],
                       'davai_tbx':__version__,
@@ -119,9 +116,8 @@ class XPMetadata(object):
                       'git_branch':os.environ.get('IA4H_GITREF'),  # CLEANME: to be pruned at some point
                       'IA4H_gitref':os.environ.get('IA4H_GITREF'),
                       'comment':os.environ.get('COMMENT'),
-                      'pack':pack,  # CLEANME: to be pruned at some point
-                      'gmkpack_packname':os.environ.get('GMKPACK_PACKNAME'),
                       }
+        self._dict.update(self._gmkpack_info())
         for k in self.env_catalog_variables:
             e = os.environ.get(k)
             if e:
@@ -131,6 +127,16 @@ class XPMetadata(object):
             if s:
                 self.set(k.lower(), s)
         self._set_details()
+    
+    def _gmkpack_info(self):
+        pack = os.environ.get('PACK')
+        if pack in (None, ''):
+            pack = os.environ.get('GMKPACK_PACKNAME')
+        return {'gmkpack_packname':os.environ.get('GMKPACK_PACKNAME'),
+                'homepack':os.environ.get('HOMEPACK'),
+                'rootpack':os.environ.get('ROOTPACK'),
+                'pack':pack,  # CLEANME: to be pruned at some point
+                }
 
     def set(self, k, v):
         self._dict[k] = v

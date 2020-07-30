@@ -42,8 +42,9 @@ class GmkpackBuildExpert(OutputExpert):
     
     def _compare(self, references, *args, **kwargs):
         return self._compare_summaries(self, references, *args, **kwargs)
-    
-    def _compare_2summaries(self, test, ref):
+
+    @classmethod
+    def compare_2summaries(cls, test, ref):
         test_execs = set(test['Executables OK'] + test['Executables failed'])
         ref_execs = set(ref['Executables OK'] + ref['Executables failed'])
         common_executables = test_execs.intersection(ref_execs)
