@@ -173,8 +173,11 @@ class OOPSJoTLExpert(OOPSTestExpert):
                              '(?P<min>' + EXTENDED_FLOAT_RE + ')\s+' +
                              '(?P<max>' + EXTENDED_FLOAT_RE + ')\s+' +
                              '(?P<avg>' + EXTENDED_FLOAT_RE + ')\s*')
-
+    
     def _parse(self):
+        pass
+    
+    def __parse(self):
         """
         Parse listing, looking for OOPS WRITE_OBSVEC values.
         """
@@ -204,13 +207,20 @@ class OOPSJoTLExpert(OOPSTestExpert):
         if len(test_status) == 0:
             raise ExpertError('Regular expression research failed.')
         self.parsedOut = test_status
-
+    
     def summary(self):
+        return {'Deactivated':'Expertise to be developed reading ODB files'}
+    
+    def __summary(self):
         return {'WRITE_OBSVEC statistics at each update':self.parsedOut,
                 'Number of updates':len(self.parsedOut)}
-
+    
     @classmethod
-    def compare_2summaries(cls, test, ref,
+    def compare_2summaries(cls, *args, **kwargs):
+        return {'Deactivated':'Expertise to be developed reading ODB files'}
+    
+    @classmethod
+    def __compare_2summaries(cls, test, ref,
                            validation_threshold=JO):
         """
         Compare two Jo-TL statistics using relative error.
