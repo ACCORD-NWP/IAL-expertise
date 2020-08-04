@@ -135,6 +135,8 @@ class XPMetadata(object):
         return {'gmkpack_packname':os.environ.get('GMKPACK_PACKNAME'),
                 'homepack':os.environ.get('HOMEPACK'),
                 'rootpack':os.environ.get('ROOTPACK'),
+                'GMKPACK_COMPILER_LABEL':os.environ.get('GMKPACK_COMPILER_LABEL'),
+                'GMKPACK_COMPILER_FLAG':os.environ.get('GMKPACK_COMPILER_FLAG'),
                 'pack':pack,  # CLEANME: to be pruned at some point
                 }
 
