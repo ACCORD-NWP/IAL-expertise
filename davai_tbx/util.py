@@ -129,10 +129,12 @@ class XPMetadata(object):
         self._set_details()
     
     def _gmkpack_info(self):
-        pack = os.environ.get('PACK')
-        if pack in (None, ''):
-            pack = os.environ.get('GMKPACK_PACKNAME')
-        return {'gmkpack_packname':os.environ.get('GMKPACK_PACKNAME'),
+        from ia4h_scm.algos import guess_packname
+        pack = guess_packname(os.environ.get('IA4H_GITREF'),
+                              os.environ.get('GMKPACK_COMPILER_LABEL'),
+                              os.environ.get('GMKPACK_PACKTYPE'),
+                              os.environ.get('GMKPACK_COMPILER_FLAG'))
+        return {'gmkpack_packname':pack,
                 'homepack':os.environ.get('HOMEPACK'),
                 'rootpack':os.environ.get('ROOTPACK'),
                 'GMKPACK_COMPILER_LABEL':os.environ.get('GMKPACK_COMPILER_LABEL'),
