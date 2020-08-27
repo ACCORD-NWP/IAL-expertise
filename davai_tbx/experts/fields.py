@@ -251,7 +251,7 @@ class FieldsInFileExpert(OutputExpert):
                  ]
     # accepted_kinds
     filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
-                 'boundary')
+                 'boundary', 'analysis')
     # reference prefixes
     ref_prefix = 'ref.'
     cnty_prefix = 'continuity.'
