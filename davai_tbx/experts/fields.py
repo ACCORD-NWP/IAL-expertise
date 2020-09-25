@@ -91,7 +91,7 @@ class NormsChecker(OutputExpert):
             normset = [n for n in normset if len(n.get('spnorms', {})) > 0]
             summary['Last step with spectral norms' + key_suffix] = normset[-1]
         for norms in normset:
-            for k in norms.keys():
+            for k in list(norms.keys()):
                 if len(norms[k]) == 0:
                     norms.pop(k)
         return summary

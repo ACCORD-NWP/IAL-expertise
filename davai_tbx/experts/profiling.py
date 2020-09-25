@@ -209,7 +209,7 @@ class RSS(OutputExpert):
 
     _re_file1 = re.compile('stdeo\.(?P<n>\d+)')
     _re_file2 = re.compile('listing\..+\.stdeo\.(?P<n>\d+)')
-    _re_rss = re.compile('^RSS=(\d+)k$')
+    _re_rss = re.compile('.*RSS=(\d+)k$')
 
     def _parse(self):
         """Actual parsing."""
