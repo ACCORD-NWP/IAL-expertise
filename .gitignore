@@ -38,5 +38,6 @@ geometries.rst
 .settings
 .project
 .pydevproject
+.idea
 
 # Locals
