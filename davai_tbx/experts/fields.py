@@ -10,9 +10,10 @@ import numpy
 import os
 import re
 
-from footprints import FPList
+from footprints import FPList, proxy as fpx
 import arpifs_listings
 from bronx.fancies import loggers
+from taylorism import Worker, batch_main
 
 from . import OutputExpert, ExpertError
 from .thresholds import (NORMSDIGITS_BITREPRO,
@@ -235,6 +236,12 @@ class FieldsInFileExpert(OutputExpert):
                 optional = True,
                 default = False
             ),
+            parallel = dict(
+                info = "Compute comparisons with multiple processes using taylorism.",
+                type = bool,
+                optional = True,
+                default = False
+            )
         )
     )
 
@@ -327,7 +334,12 @@ class FieldsInFileExpert(OutputExpert):
                 else:
                     logger.warning(' '.join([message," => ignored in comparison."]))
                     continue
-            f = ref.lstrip(self.ref_prefix).lstrip(self.cnty_prefix).lstrip(self.csty_prefix)
+            # find test filename from ref
+            f = ref
+            for prefix in (self.ref_prefix, self.cnty_prefix, self.csty_prefix):
+                if f.startswith(prefix):
+                    f = f[len(prefix):]
+            #f = ref.lstrip(self.ref_prefix).lstrip(self.cnty_prefix).lstrip(self.csty_prefix)
             if f not in os.listdir(os.getcwd()):
                 message = "Reference file: '{}' has no local output equivalent '{}'.".format(ref, f)
                 if self.fatal_exceptions:
@@ -373,14 +385,29 @@ class FieldsInFileExpert(OutputExpert):
         pairs = self._make_pairs(references)
         comp = {}
         if len(pairs) > 0:
-            for (test, ref) in pairs:
-                logger.info('{} // {}'.format(test, ref))
-                comp[test] = compare_2_files(test, ref,
-                                             ignore_meta=self.ignore_meta,
-                                             ignore_orphan_fields=self.ignore_orphan_fields,
-                                             hide_bit_repro_fields=self.hide_bit_repro_fields,
-                                             normalized_validation_threshold=self.normalized_validation_threshold,
-                                             fatal_exceptions=self.fatal_exceptions)
+            if not self.parallel:
+                for (test, ref) in pairs:
+                    logger.info('{} // {}'.format(test, ref))
+                    comp[test] = compare_2_files(test, ref,
+                                                 ignore_meta=self.ignore_meta,
+                                                 ignore_orphan_fields=self.ignore_orphan_fields,
+                                                 hide_bit_repro_fields=self.hide_bit_repro_fields,
+                                                 normalized_validation_threshold=self.normalized_validation_threshold,
+                                                 fatal_exceptions=self.fatal_exceptions)
+            else:
+                report = batch_main(common_instructions=dict(ignore_meta=self.ignore_meta,
+                                                             ignore_orphan_fields=self.ignore_orphan_fields,
+                                                             hide_bit_repro_fields=self.hide_bit_repro_fields,
+                                                             normalized_validation_threshold=self.normalized_validation_threshold,
+                                                             fatal_exceptions=self.fatal_exceptions),
+                                    individual_instructions=dict(test=[p[0] for p in pairs],
+                                                                 ref=[p[1] for p in pairs]),
+                                    scheduler=fpx.scheduler(limit='threads', max_threads=0, binded=True),
+                                    print_report=lambda arg: None)
+                for file_report in report['workers_report']:
+                    test_filename = file_report['report'][0]
+                    file_comparison = file_report['report'][1]
+                    comp[test_filename] = file_comparison
             overall = {}
             overall['Validated'] = all([c.get('Validated') for c in comp.values()])
             overall['Bit-reproducible'] = all([c.get('Bit-reproducible') for c in comp.values()])
@@ -407,7 +434,8 @@ def compare_2_files(test, ref,
                     ignore_orphan_fields=False,
                     hide_bit_repro_fields=True,
                     normalized_validation_threshold=NORMALIZED_FIELDS_DIFF,
-                    fatal_exceptions=True):
+                    fatal_exceptions=True,
+                    verbose=False):
     """
     Compare 2 files containing fields.
 
@@ -427,31 +455,35 @@ def compare_2_files(test, ref,
     r = epygram.formats.resource(ref, 'r')
     comp = {}
     # list fields
-    test_list = set(t.listfields())
-    ref_list = set(r.listfields())
+    test_list = list(t.listfields())
+    ref_list = list(r.listfields())
     # new and lost
-    new_fields = sorted(test_list.difference(ref_list))
-    lost_fields = sorted(ref_list.difference(test_list))
+    new_fields = [f for f in test_list if f not in ref_list]
+    lost_fields = [f for f in ref_list if f not in test_list]
+    # errors
+    uncompared_fields = []
     # common fields: comparison
-    intersection = test_list.intersection(ref_list)
+    intersection = [f for f in test_list if f in ref_list]
+    if len(intersection) > 0 and isinstance(intersection[0], six.string_types):
+        intersection = sorted(intersection)
     fields_status = {}
     max_normalized_diff = 0.
-    for f in sorted(intersection):
+    for f in intersection:
         if ignore_field(f):
             continue
         try:
             (status,
-             max_normalized_diff,
-             ignore_meta) = compare_2_fields(t, r, f, max_normalized_diff,
-                                             ignore_meta=ignore_meta,
-                                             normalized_validation_threshold=normalized_validation_threshold)
+             max_normalized_diff) = compare_2_fields(t, r, f, max_normalized_diff,
+                                                     ignore_meta=ignore_meta,
+                                                     normalized_validation_threshold=normalized_validation_threshold)
         except Exception as e:
             if fatal_exceptions:
                 raise
+            else:
+                uncompared_fields.append(f)
             status = {'Error during comparison':str(e)}
         if not status.get('Validated', False) or not hide_bit_repro_fields:
-            fields_status[f] = status
-
+            fields_status[str(f)] = status
     # status over all fields
     comp['Validated'] = all([status.get('Validated', False) for status in fields_status.values()])
     comp['Validated means'] = 'All fields have identical shape/mask than reference, and normalized errors lower than {}'.format(normalized_validation_threshold)
@@ -464,17 +496,12 @@ def compare_2_files(test, ref,
                                      status.get('Validity diff', None) is None and
                                      status.get('Geometry diff', None) is None)
                                     for status in fields_status.values()])
-    if t.format == 'GRIB':
-        comp['Common fields differences'] = []
-        for f in sorted(intersection):
-            fields_status[f]['fid'] = f
-            comp['Common fields differences'].append(fields_status[f]['fid'])
-    else:
-        comp['Common fields differences'] = fields_status
+    comp['Common fields differences'] = fields_status
     comp['Max normalized diff'] = '{:%}'.format(max_normalized_diff)
     comp['mainMetrics'] = 'Max normalized diff'
     comp['New fields'] = new_fields if len(new_fields) > 0 else None
     comp['Lost fields'] = lost_fields if len(lost_fields) > 0 else None
+    comp['Unable to compare fields'] = uncompared_fields if len(uncompared_fields) > 0 else None
     return comp
 
 
@@ -495,18 +522,20 @@ def compare_2_fields(test_resource, ref_resource, fid,
     """
     import epygram
     status = {}
+    validated = True
     tfld = test_resource.readfield(fid)
     rfld = ref_resource.readfield(fid)
     if not isinstance(tfld, epygram.fields.MiscField):
         for fld in (tfld, rfld):  # would not be sure of the meaning of errors in spectral space
             if fld.spectral:
-                fld.sp2gp
+                fld.sp2gp()
     # metadata
     if not isinstance(tfld, epygram.fields.MiscField) and not ignore_meta:
         status['Validity diff'] = tfld.validity.recursive_diff(rfld.validity)
         status['Geometry diff'] = tfld.geometry.recursive_diff(rfld.geometry)
-        if test_resource.format == 'FA':  # after the first one, in case of FA resources, skip metadata comparison
-            ignore_meta = True
+        if any([status.get('Validity diff', None),
+                status.get('Geometry diff', None)]):
+            validated = False
     # data
     if tfld.data.shape != rfld.data.shape:
         status['Data diff'] = 'Comparison not possible: dimensions differ'
@@ -520,25 +549,19 @@ def compare_2_fields(test_resource, ref_resource, fid,
         if not status['Data bit-repro']:
             data_diff, common_mask = tfld.normalized_comparison(rfld)
             status['Data diff'] = data_diff
+            status['Mask is common'] = common_mask
+            if not common_mask:
+                validated = False
             loc_max = max([abs(v) for v in data_diff.values()])
             if loc_max > max_normalized_diff:
                 max_normalized_diff = loc_max
-    # conclude about field validation
-    if any([status.get('Validity diff', None),
-            status.get('Geometry diff', None)]):
-        validated = False
-    if status['Data bit-repro']:
-        validated = True
-    else:
-        if not common_mask:
+    # if not bit-repro, check differences are under thresholds
+    if not status['Data bit-repro']:
+        if any([abs(v) >= normalized_validation_threshold
+                for v in data_diff.values()]):
             validated = False
-        elif any([abs(v) >= normalized_validation_threshold
-                  for v in data_diff.values()]):
-            validated = False
-        else:
-            validated = True
     status['Validated'] = validated
-    return status, max_normalized_diff, ignore_meta
+    return status, max_normalized_diff
 
 
 def ignore_field(fid):
@@ -549,3 +572,115 @@ def ignore_field(fid):
             ignore = True
     return ignore
 
+
+class FieldComparer(Worker):
+    """
+    Compares 2 files.
+    """
+
+    _footprint = dict(
+        info = "Compares 2 files.",
+        attr = dict(
+            test=dict(
+                info="Test file.",
+            ),
+            ref=dict(
+                info="Ref file.",
+            ),
+            ignore_meta=dict(
+                type=bool,
+                optional=True,
+                default=False
+            ),
+            ignore_orphan_fields=dict(
+                type=bool,
+                optional=True,
+                default=False
+            ),
+            hide_bit_repro_fields=dict(
+                type=bool,
+                optional=True,
+                default=True
+            ),
+            normalized_validation_threshold=dict(
+                type=float,
+                optional=True,
+                default=NORMALIZED_FIELDS_DIFF
+            ),
+            fatal_exceptions=dict(
+                type=bool,
+                optional=True,
+                default=True
+            ),
+        )
+    )
+
+    def _task(self):
+        return (self.test,
+                compare_2_files(self.test, self.ref,
+                               ignore_meta=self.ignore_meta,
+                               ignore_orphan_fields=self.ignore_orphan_fields,
+                               hide_bit_repro_fields=self.hide_bit_repro_fields,
+                               normalized_validation_threshold=self.normalized_validation_threshold,
+                               fatal_exceptions=self.fatal_exceptions))
+
+
+def scatter_fields_process_summary(report_file):
+    import json
+    with open(report_file, 'r') as f:
+        report = json.load(f)
+    report = report['fields_in_file']
+    for filename, r in report.items():
+        if isinstance(r, dict):
+            scatter_fields_comparison(filename, r)
+
+
+def scatter_fields_comparison(grid_point_file_name,
+                              report):
+    """
+    Make a 'bokeh' scatter plot of fields comparison from 1 file.
+
+    :param report: a dict, as returned by function **compare_2_files()**
+    :param grid_point_file_name: name of the gridpoint file (for Labelling)
+    """
+    from bokeh.plotting import figure, output_file, save  # @UnresolvedImport
+    print(grid_point_file_name + '\n' + '-' * len(grid_point_file_name))
+    print("Lost fields:")
+    print(report['Lost fields'])
+    print("New fields:")
+    print(report['New fields'])
+    diffs = report['Common fields differences']
+    flds = []
+    biases = []
+    stds = []
+    errmaxs = []
+    masks = []
+    for fld, status in diffs.items():
+       flds.append(fld.replace("'", ""))
+       biases.append(status['Data diff']['bias'])
+       stds.append(status['Data diff']['std'])
+       errmaxs.append(status['Data diff']['errmax'])
+       masks.append(status.get('Mask is common', True))
+    src = {'bias':biases, 'std':stds, 'errmax':errmaxs, 'mask':masks, 'fid':flds,
+           'std1':[6.+min(s*2e2, 1e2) for s in stds],
+           'mask_as_color':['blue' if m else 'red' for m in masks]}
+    TITLE = "Reproducibility of fields"
+    TOOLS = "hover,pan,wheel_zoom,box_zoom,reset,save"
+    # plot
+    p = figure(tools=TOOLS, toolbar_location="above", plot_width=1200, title=TITLE)
+    p.background_fill_color = "#dddddd"
+    p.xaxis.axis_label = "Bias"
+    p.yaxis.axis_label = "Max error"
+    p.grid.grid_line_color = "white"
+    p.hover.tooltips = [
+        ("fid", "@fid"),
+        ("bias:", "@bias"),
+        ("std", "@std"),
+        ("errmax", "@errmax"),
+        ("mask OK", "@mask")
+    ]
+    p.scatter('bias', 'errmax', source=src, size='std1',
+              color='mask_as_color', line_color="black", fill_alpha=0.8)
+    output_file("{}.html".format(grid_point_file_name),
+                title="Comparison of Fields in: {}".format(grid_point_file_name))
+    save(p)
