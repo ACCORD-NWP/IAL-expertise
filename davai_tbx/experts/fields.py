@@ -625,30 +625,53 @@ class FieldComparer(Worker):
                                fatal_exceptions=self.fatal_exceptions))
 
 
-def scatter_fields_process_summary(report_file):
+def scatter_fields_process_summary(report_file, all_in_one=False):
+    """
+    Process a taskinfo summary file, and plot comparisons.
+
+    :param report_file: taskinfo comparison summary file name
+    :param all_in_one: to save all plot into one html file (does not work)
+    """
     import json
+    from bokeh.io import save, output_file, reset_output  # @UnresolvedImport
+    from bokeh.layouts import column  # @UnresolvedImport
     with open(report_file, 'r') as f:
         report = json.load(f)
     report = report['fields_in_file']
+    if all_in_one:
+        output_file("{}.html".format(report_file),
+                    title="Comparison of Fields")
+    plots = []
     for filename, r in report.items():
         if isinstance(r, dict):
-            scatter_fields_comparison(filename, r)
+            plots.append(scatter_fields_comparison(filename, r,
+                                                   save=not all_in_one))
+    if all_in_one:
+        save(column(*plots))
+
 
 
 def scatter_fields_comparison(grid_point_file_name,
-                              report):
+                              report,
+                              save=False):
     """
     Make a 'bokeh' scatter plot of fields comparison from 1 file.
 
-    :param report: a dict, as returned by function **compare_2_files()**
     :param grid_point_file_name: name of the gridpoint file (for Labelling)
+    :param report: a dict, as returned by function **compare_2_files()**
+    :param save: to save plot in a html file or just return it
     """
-    from bokeh.plotting import figure, output_file, save  # @UnresolvedImport
-    print(grid_point_file_name + '\n' + '-' * len(grid_point_file_name))
-    print("Lost fields:")
-    print(report['Lost fields'])
-    print("New fields:")
-    print(report['New fields'])
+    from bokeh.io import output_file, save  # @UnresolvedImport
+    from bokeh.plotting import figure  # @UnresolvedImport
+    # print new/lost
+    print("File:" + grid_point_file_name + '\n' + '-' * len(grid_point_file_name))
+    print("  Lost fields:")
+    for f in report['Lost fields']:
+        print("    - {}".format(f))
+    print("  New fields:")
+    for f in report['New fields']:
+        print("    - {}".format(f))
+    # prepare diffs
     diffs = report['Common fields differences']
     flds = []
     biases = []
@@ -664,23 +687,27 @@ def scatter_fields_comparison(grid_point_file_name,
     src = {'bias':biases, 'std':stds, 'errmax':errmaxs, 'mask':masks, 'fid':flds,
            'std1':[6.+min(s*2e2, 1e2) for s in stds],
            'mask_as_color':['blue' if m else 'red' for m in masks]}
-    TITLE = "Reproducibility of fields"
+    TITLE = "{} : Normalized errors of fields in file".format(grid_point_file_name)
     TOOLS = "hover,pan,wheel_zoom,box_zoom,reset,save"
     # plot
-    p = figure(tools=TOOLS, toolbar_location="above", plot_width=1200, title=TITLE)
+    p = figure(tools=TOOLS, toolbar_location="above", plot_width=1200, title=TITLE,
+               y_axis_type="log")
     p.background_fill_color = "#dddddd"
     p.xaxis.axis_label = "Bias"
     p.yaxis.axis_label = "Max error"
     p.grid.grid_line_color = "white"
     p.hover.tooltips = [
         ("fid", "@fid"),
-        ("bias:", "@bias"),
-        ("std", "@std"),
-        ("errmax", "@errmax"),
-        ("mask OK", "@mask")
+        ("Bias", "@bias"),
+        ("Std.dev of errors (size)", "@std"),
+        ("Max absolute error", "@errmax"),
+        ("Mask is common", "@mask")
     ]
     p.scatter('bias', 'errmax', source=src, size='std1',
               color='mask_as_color', line_color="black", fill_alpha=0.8)
-    output_file("{}.html".format(grid_point_file_name),
-                title="Comparison of Fields in: {}".format(grid_point_file_name))
-    save(p)
+    if save:
+        output_file("{}.html".format(grid_point_file_name),
+                    title="Comparison of Fields in: {}".format(grid_point_file_name))
+        save(p)
+    return p
+
