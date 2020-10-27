@@ -22,6 +22,7 @@ beaufix=1
 prolix=1
 belenos=1
 taranis=0
+sxcoope1=1
 
 
 # Filters
@@ -53,6 +54,12 @@ if [ "$taranis" == 1 ]; then
   echo "...taranis..."
   rsync -avL * taranis:$DAVAI_DIR $notests
   logger="$logger - taranis\n"
+fi
+echo "------------------------------------------------------"
+if [ "$sxcoope1" == 1 ]; then
+  echo "...sxcoope1..."
+  rsync -avL * sxcoope1:$DAVAI_DIR $notests
+  logger="$logger - sxcoope1\n"
 fi
 
 
