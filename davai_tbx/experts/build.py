@@ -52,5 +52,5 @@ class GmkpackBuildExpert(OutputExpert):
         ref_failed = common_executables.intersection(ref['Executables failed'])
         return {'Validated means':'No executables is failed that was successful in reference.',
                 'Validated':test_failed.issubset(ref_failed),
-                'Number of newly failed executables':len(test_failed.difference(ref_failed)),
-                'mainMetrics':'Number of newly failed executables'}
+                'Newly missing executables':len(test_failed.difference(ref_failed)),
+                'mainMetrics':'Newly missing executables'}
