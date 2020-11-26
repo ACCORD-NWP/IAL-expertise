@@ -190,7 +190,7 @@ class ExpertBoard(object):
                                             'short':'- No ref -',
                                             'text':'No reference to be compared to'}
 
-    def remember_listings(self, promises, continuity):
+    def remember_listings(self, promises, continuity):  # TODO: consistency too !
         """Write paths to listings in cache/archive into summaries."""
         promises = [p.rh for p in promises if p.rh.resource.kind in ('listing', 'plisting')]
         if len(promises) > 1:
