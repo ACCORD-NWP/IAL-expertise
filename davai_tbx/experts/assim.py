@@ -83,6 +83,14 @@ class JoTable(OutputExpert):
         """
         if len(ref) > 0:
             if len(test) > 0:
+                # if not the same number of JoTables
+                if len(set(test.keys())) != len(set(ref.keys())):
+                    # dirty hack: del NSIM4D= 1
+                    for tset in (test, ref):
+                        nsim4d1 = [k for k in tset.keys() if "NSIM4D= 1" in k]
+                        if len(nsim4d1) == 1:
+                            tset._content.pop(nsim4d1[0])
+                # compute diff
                 diff = test.compute_diff(ref)
                 maxdiff = test.maxdiff(ref)
                 comp = {'All comparisons':diff,
