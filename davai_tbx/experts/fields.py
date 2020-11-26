@@ -203,6 +203,12 @@ class FieldsInFileExpert(OutputExpert):
                 optional = True,
                 default=FPList([]),
             ),
+            validate_if_bit_repro_only=dict(
+                info="If True, Validated == Bit-repro; else, use normalized_validation_threshold.",
+                type=bool,
+                optional = True,
+                default = True
+            ),
             normalized_validation_threshold = dict(
                 info = "Threshold on normalized distance for validation. " +
                        "Normalized distance is computed as normalized(test, ref) - normalized(ref, ref) " +
@@ -392,12 +398,14 @@ class FieldsInFileExpert(OutputExpert):
                                                  ignore_meta=self.ignore_meta,
                                                  ignore_orphan_fields=self.ignore_orphan_fields,
                                                  hide_bit_repro_fields=self.hide_bit_repro_fields,
+                                                 validate_if_bit_repro_only=self.validate_if_bit_repro_only,
                                                  normalized_validation_threshold=self.normalized_validation_threshold,
                                                  fatal_exceptions=self.fatal_exceptions)
             else:
                 report = batch_main(common_instructions=dict(ignore_meta=self.ignore_meta,
                                                              ignore_orphan_fields=self.ignore_orphan_fields,
                                                              hide_bit_repro_fields=self.hide_bit_repro_fields,
+                                                             validate_if_bit_repro_only=self.validate_if_bit_repro_only,
                                                              normalized_validation_threshold=self.normalized_validation_threshold,
                                                              fatal_exceptions=self.fatal_exceptions),
                                     individual_instructions=dict(test=[p[0] for p in pairs],
@@ -433,6 +441,7 @@ def compare_2_files(test, ref,
                     ignore_meta=False,
                     ignore_orphan_fields=False,
                     hide_bit_repro_fields=True,
+                    validate_if_bit_repro_only=True,
                     normalized_validation_threshold=NORMALIZED_FIELDS_DIFF,
                     fatal_exceptions=True,
                     verbose=False):
@@ -446,6 +455,7 @@ def compare_2_files(test, ref,
     :param ignore_meta: Ignore metadata in comparison.
     :param ignore_orphan_fields: Ignore fields present in only one of the resources.
     :param hide_bit_repro_fields: Do not show bit-reproducible fields in comparison.
+    :param validate_if_bit_repro_only: If True, Validated == Bit-repro; else, use normalized_validation_threshold.
     :param normalized_validation_threshold: Threshold on normalized distance for validation.
     :param fatal_exceptions: Raise comparing errors.
     """
@@ -482,11 +492,16 @@ def compare_2_files(test, ref,
             else:
                 uncompared_fields.append(f)
             status = {'Error during comparison':str(e)}
-        if not status.get('Validated', False) or not hide_bit_repro_fields:
+        if not status.get('Data bit-repro', False) or not hide_bit_repro_fields:
             fields_status[str(f)] = status
     # status over all fields
     comp['Validated'] = all([status.get('Validated', False) for status in fields_status.values()])
-    comp['Validated means'] = 'All fields have identical shape/mask than reference, and normalized errors lower than {}'.format(normalized_validation_threshold)
+    if validate_if_bit_repro_only:
+        comp['Validated means'] = 'All fields have identical shape/mask than reference, and data is bit-repro'
+    else:
+        comp['Validated means'] = ' '.join(['All fields have identical shape/mask than reference,',
+                                            'and normalized errors lower than {}'.format(
+                                                normalized_validation_threshold)])
     if not ignore_orphan_fields:  # check that there is no orphan
         if len(new_fields + lost_fields) > 0:
             comp['Validated'] = False
@@ -508,6 +523,7 @@ def compare_2_files(test, ref,
 def compare_2_fields(test_resource, ref_resource, fid,
                      max_normalized_diff=0.,
                      ignore_meta=False,
+                     validate_if_bit_repro_only=True,
                      normalized_validation_threshold=NORMALIZED_FIELDS_DIFF):
     """
     Compare two same fields from different resources.
@@ -518,6 +534,7 @@ def compare_2_fields(test_resource, ref_resource, fid,
 
     :param max_normalized_diff: maximum normalized difference to be updated
     :param ignore_meta: Ignore metadata in comparison.
+    :param validate_if_bit_repro_only: If True, Validated == Bit-repro; else, use normalized_validation_threshold.
     :param normalized_validation_threshold: Threshold on normalized distance for validation.
     """
     import epygram
@@ -538,7 +555,7 @@ def compare_2_fields(test_resource, ref_resource, fid,
             validated = False
     # data
     if tfld.data.shape != rfld.data.shape:
-        status['Data diff'] = 'Comparison not possible: dimensions differ'
+        status['Normalized data diff'] = 'Comparison not possible: dimensions differ'
         validated = False
         status['Data bit-repro'] = False
     else:
@@ -548,7 +565,7 @@ def compare_2_fields(test_resource, ref_resource, fid,
             status['Data bit-repro'] = bool(numpy.all(tfld.data == rfld.data))
         if not status['Data bit-repro']:
             data_diff, common_mask = tfld.normalized_comparison(rfld)
-            status['Data diff'] = data_diff
+            status['Normalized data diff'] = data_diff
             status['Mask is common'] = common_mask
             if not common_mask:
                 validated = False
@@ -557,9 +574,12 @@ def compare_2_fields(test_resource, ref_resource, fid,
                 max_normalized_diff = loc_max
         # if not bit-repro, check differences are under thresholds
         if not status['Data bit-repro']:
-            if any([abs(v) >= normalized_validation_threshold
-                    for v in data_diff.values()]):
+            if validate_if_bit_repro_only:
                 validated = False
+            else:
+                if any([abs(v) >= normalized_validation_threshold
+                        for v in data_diff.values()]):
+                    validated = False
     status['Validated'] = validated
     return status, max_normalized_diff
 
