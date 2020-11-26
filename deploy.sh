@@ -21,7 +21,7 @@ DAVAI_DIR="public/davai/$VERSION"
 beaufix=1
 prolix=1
 belenos=1
-taranis=0
+taranis=1
 sxcoope1=1
 
 
