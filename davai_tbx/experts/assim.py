@@ -87,7 +87,7 @@ class JoTable(OutputExpert):
                 if len(set(test.keys())) != len(set(ref.keys())):
                     # dirty hack: del NSIM4D= 1
                     for tset in (test, ref):
-                        nsim4d1 = [k for k in tset.keys() if "NSIM4D= 1" in k]
+                        nsim4d1 = [k for k in tset.keys() if re.match('.*NSIM4D=\s*1.*', k)]
                         if len(nsim4d1) == 1:
                             tset._content.pop(nsim4d1[0])
                 # compute diff
