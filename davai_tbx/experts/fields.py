@@ -555,11 +555,11 @@ def compare_2_fields(test_resource, ref_resource, fid,
             loc_max = max([abs(v) for v in data_diff.values()])
             if loc_max > max_normalized_diff:
                 max_normalized_diff = loc_max
-    # if not bit-repro, check differences are under thresholds
-    if not status['Data bit-repro']:
-        if any([abs(v) >= normalized_validation_threshold
-                for v in data_diff.values()]):
-            validated = False
+        # if not bit-repro, check differences are under thresholds
+        if not status['Data bit-repro']:
+            if any([abs(v) >= normalized_validation_threshold
+                    for v in data_diff.values()]):
+                validated = False
     status['Validated'] = validated
     return status, max_normalized_diff
 

@@ -354,6 +354,12 @@ class ParallelBatorProfile(OutputExpert):
                 optional = True,
                 default = 'parallel_exec_synthesis.json'
             ),
+            graphics = dict(
+                info = "Plot relative differences",
+                optional = True,
+                default = False,
+                type = bool
+            )
         )
     )
 
@@ -377,7 +383,7 @@ class ParallelBatorProfile(OutputExpert):
         return summary
 
     @classmethod
-    def compare_2summaries(cls, test, ref):
+    def compare_2summaries(cls, test, ref, graphics=False):
         """
         Compare to a reference summary: absolute and relative difference
         in RSSmax and RSStotal, and evolution of imbalance.
@@ -407,11 +413,12 @@ class ParallelBatorProfile(OutputExpert):
                 'Relative diff in total memory':ppp(total_memdiff /
                                                     ref['Total memory']),
                 'mainMetrics':'Max relative diff in elapse time'}
-        svg = io.StringIO()
-        fig = plot_bator_profile(comp)
-        fig.savefig(svg, format='svg')
-        svg.seek(0)
-        comp['Relative diff (SVG)'] = svg.read()
+        if graphics:
+            svg = io.StringIO()
+            fig = plot_bator_profile(comp)
+            fig.savefig(svg, format='svg')
+            svg.seek(0)
+            comp['Relative diff (SVG)'] = svg.read()
         return comp
 
     def _compare(self, references):
@@ -419,7 +426,7 @@ class ParallelBatorProfile(OutputExpert):
         Compare to a reference summary: absolute and relative difference
         in Elapse time and Memory.
         """
-        return self._compare_summaries(references)
+        return self._compare_summaries(references, graphics=self.graphics)
 
 
 def plot_bator_profile(compdict):
