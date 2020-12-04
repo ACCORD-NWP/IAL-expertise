@@ -670,9 +670,9 @@ def scatter_fields_process_summary(report_file, all_in_one=False):
         save(column(*plots))
 
 
-def scatter_fields_comparison(grid_point_file_name,
-                              report,
-                              save_html=False):
+def scatter_fields_comparison0(grid_point_file_name,
+                               report,
+                               save_html=False):
     """
     Make a 'bokeh' scatter plot of fields comparison from 1 file.
 
@@ -696,12 +696,13 @@ def scatter_fields_comparison(grid_point_file_name,
     masks = []
     for fld, status in diffs.items():
         flds.append(fld.replace("'", ""))
-        biases.append(status['Data diff']['bias'])
-        stds.append(status['Data diff']['std'])
-        errmaxs.append(status['Data diff']['errmax'])
+        biases.append(status['Normalized data diff']['bias'])
+        stds.append(status['Normalized data diff']['std'])
+        errmaxs.append(status['Normalized data diff']['errmax'])
         masks.append(status.get('Mask is common', True))
     src = {'bias':biases, 'std':stds, 'errmax':errmaxs, 'fid':flds, 'mask': masks,
            'std1':[6.+min(s*2e2, 1e2) for s in stds],
+           'errmax1':[6.+min(e*2e2, 1e2) for e in errmaxs],
            'mask_as_color':['blue' if m else 'red' for m in masks]}
     title = "{} : Normalized errors of fields in file".format(grid_point_file_name)
     tools = "hover,pan,wheel_zoom,box_zoom,reset,save"
@@ -721,6 +722,10 @@ def scatter_fields_comparison(grid_point_file_name,
     ]
     p.scatter('bias', 'errmax', source=src, size='std1',
               color='mask_as_color', line_color="black", fill_alpha=0.8)
+    p.x_range.start = min(biases) - abs(min(biases)) * 0.05
+    p.x_range.end = max(biases) + abs(max(biases)) * 0.05
+    p.y_range.start = min(errmaxs) - abs(min(errmaxs)) * 0.05
+    p.y_range.end = max(errmaxs) + abs(max(errmaxs)) * 0.05
     if save_html:
         html_name = "{}.html".format(grid_point_file_name)
         print("=>", html_name)
@@ -729,3 +734,124 @@ def scatter_fields_comparison(grid_point_file_name,
         save(p)
     return p
 
+
+def scatter_fields_comparison(grid_point_file_name,
+                              report,
+                              save_html=False):
+    """
+    Make a 'bokeh' scatter plot of fields comparison from 1 file.
+
+    :param grid_point_file_name: name of the gridpoint file (for Labelling)
+    :param report: a dict, as returned by function **compare_2_files()**
+    :param save_html: to save plot in a html file or just return it
+    """
+    from bokeh.io import output_file, save, show  # @UnresolvedImport
+    from bokeh.plotting import figure  # @UnresolvedImport
+    from bokeh.layouts import column, row
+    # print new/lost
+    print('-' * (len(grid_point_file_name) + 6))
+    print("File: " + grid_point_file_name)
+    print("  Lost fields:", report['Lost fields'])
+    print("  New fields:", report['New fields'])
+    # prepare diffs
+    diffs = report['Common fields differences']
+    flds = []
+    biases = []
+    stds = []
+    errmaxs = []
+    masks = []
+    for fld, status in diffs.items():
+        flds.append(fld.replace("'", ""))
+        biases.append(status['Normalized data diff']['bias'])
+        stds.append(status['Normalized data diff']['std'])
+        errmaxs.append(status['Normalized data diff']['errmax'])
+        masks.append(status.get('Mask is common', True))
+    src = {'bias':biases, 'std':stds, 'errmax':errmaxs, 'fid':flds, 'mask': masks,
+           'std1':[6.+min(s*2e2, 0.5*1e2) for s in stds],
+           'errmax1':[6.+min(e*2e2, 0.5*1e2) for e in errmaxs],
+           'mask_as_color':['blue' if m else 'red' for m in masks]}
+    title = "{} : Normalized errors of fields in file".format(grid_point_file_name)
+    tools = "hover,pan,wheel_zoom,box_zoom,reset,save"
+
+    def subplot(on_x='bias', on_y='errmax', size='std1',
+                y_range=['min', 'max'],
+                plot_width=600, plot_height=400,
+                **other_figure_kwargs):
+        """
+        Subfunction to plot.
+
+        :param on_x: choice for x coordinate
+        :param on_y: choice for y coordinate
+        :param size: choice for size coordinate
+        :param y_range: kind of y axis range
+            ('min', 'max'), (0, 'max'), ...
+        :param other_figure_kwargs: passed to figure()
+        :return: the figure object
+        """
+        p = figure(plot_width=plot_width, plot_height=plot_height,
+                   tools=tools, toolbar_location="above",
+                   **other_figure_kwargs)
+        p.background_fill_color = "#dddddd"
+        p.grid.grid_line_color = "white"
+        p.hover.tooltips = [
+            ("Field id", "@fid"),
+            ("Bias", "@bias"),
+            ("Errors Stdev", "@std"),
+            ("Max error", "@errmax"),
+            ("Mask OK", "@mask")
+        ]
+        p.scatter(on_x, on_y, size=size, source=src,
+                  color='mask_as_color',
+                  line_color="black",
+                  fill_alpha=0.8)
+        p.x_range.start = min(src[on_x]) - abs(min(src[on_x])) * 0.05
+        p.x_range.end = max(src[on_x]) + abs(max(src[on_x])) * 0.05
+        if y_range[0] == 'min':
+            y_range[0] = min(src[on_y])
+        p.y_range.start = y_range[0] - abs(y_range[0]) * 0.05
+        if y_range[1] == 'max':
+            y_range[1] = max(y_range[0] * 2, max(src[on_y]))
+        p.y_range.end = y_range[1] + abs(y_range[1]) * 0.05
+        return p
+
+    # --- max errors ---
+    y_range = (1e-4, 1)
+    # plot Above
+    p1 = subplot(y_range=[y_range[1], 'max'], y_axis_type="log",
+                 title="Max errors")
+    p1.yaxis.axis_label = "Max Normalized error > {}".format(y_range[1])
+    # plot Middle
+    p2 = subplot(y_range=y_range, y_axis_type="log")
+    p2.yaxis.axis_label = "Max Normalized error in {}".format(y_range)
+    # plot Below
+    p3 = subplot(y_range=(0, y_range[0]))
+    p3.yaxis.axis_label = "Max Normalized error < {}".format(y_range[0])
+    p3.xaxis.axis_label = "Bias"
+    c1 = column(p1, p2, p3)
+
+    # --- std ---
+    # plot Above
+    p1 = subplot(on_y='std', size='errmax1',
+                 y_range=[y_range[1], 'max'], y_axis_type="log",
+                 title="Std.dev")
+    p1.yaxis.axis_label = "Normalized Std.dev > {}".format(y_range[1])
+    # plot Middle
+    p2 = subplot(on_y='std', size='errmax1',
+                 y_range=y_range, y_axis_type="log")
+    p2.yaxis.axis_label = "Normalized Std.dev in {}".format(y_range)
+    # plot Below
+    p3 = subplot(on_y='std', size='errmax1',
+                 y_range=(0, y_range[0]))
+    p3.yaxis.axis_label = "Normalized Std.dev < {}".format(y_range[0])
+    p3.xaxis.axis_label = "Bias"
+    c2 = column(p1, p2, p3)
+
+    r = row(c1, c2)
+
+    if save_html:
+        html_name = "{}.html".format(grid_point_file_name)
+        print("=>", html_name)
+        output_file(html_name,
+                    title=title)
+        save(r)
+    return r
