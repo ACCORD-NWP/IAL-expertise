@@ -5,7 +5,6 @@ Thresholds for validation of various comparisons.
 """
 from __future__ import print_function, absolute_import, division, unicode_literals
 
-
 #: Threshold in Jo relative difference for validation
 JO = 1e-8
 #: Threshold in Jo AD test number of equal digits to validate
@@ -19,9 +18,9 @@ NORMSDIGITS_BITREPRO = 0
 #: Threshold for number of different digits in norms for Suspicious result
 NORMSDIGITS_SUSPICIOUS = 1
 #: Thresholds for validation of Jo-Tables
-JOTABLES = {'n':{'diff':1, 'reldiff':0.1},
-            'jo':{'diff':10, 'reldiff':0.1},
-            'jo/n':{'diff':0.2, 'reldiff':1.},}
+JOTABLES = {'n':{'diff':1, 'reldiff':0.001},
+            'jo':{'diff':0.1, 'reldiff':0.001},
+            'jo/n':{'diff':0.01, 'reldiff':0.001},}
 #: Threshold for number of observations
 OBSERVATIONS_NUMBER = 1
 #: Threshold for maximum error between 2 fields
