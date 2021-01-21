@@ -814,44 +814,48 @@ def scatter_fields_comparison(grid_point_file_name,
         p.y_range.end = y_range[1] + abs(y_range[1]) * 0.05
         return p
 
-    # --- max errors ---
-    y_range = (1e-4, 1)
-    # plot Above
-    p1 = subplot(y_range=[y_range[1], 'max'], y_axis_type="log",
-                 title="Max errors")
-    p1.yaxis.axis_label = "Max Normalized error > {}".format(y_range[1])
-    # plot Middle
-    p2 = subplot(y_range=y_range, y_axis_type="log")
-    p2.yaxis.axis_label = "Max Normalized error in {}".format(y_range)
-    # plot Below
-    p3 = subplot(y_range=(0, y_range[0]))
-    p3.yaxis.axis_label = "Max Normalized error < {}".format(y_range[0])
-    p3.xaxis.axis_label = "Bias"
-    c1 = column(p1, p2, p3)
+    if len(diffs) > 0:
+        # --- max errors ---
+        y_range = (1e-4, 1)
+        # plot Above
+        p1 = subplot(y_range=[y_range[1], 'max'], y_axis_type="log",
+                     title="Max errors")
+        p1.yaxis.axis_label = "Max Normalized error > {}".format(y_range[1])
+        # plot Middle
+        p2 = subplot(y_range=y_range, y_axis_type="log")
+        p2.yaxis.axis_label = "Max Normalized error in {}".format(y_range)
+        # plot Below
+        p3 = subplot(y_range=(0, y_range[0]))
+        p3.yaxis.axis_label = "Max Normalized error < {}".format(y_range[0])
+        p3.xaxis.axis_label = "Bias"
+        c1 = column(p1, p2, p3)
 
-    # --- std ---
-    # plot Above
-    p1 = subplot(on_y='std', size='errmax1',
-                 y_range=[y_range[1], 'max'], y_axis_type="log",
-                 title="Std.dev")
-    p1.yaxis.axis_label = "Normalized Std.dev > {}".format(y_range[1])
-    # plot Middle
-    p2 = subplot(on_y='std', size='errmax1',
-                 y_range=y_range, y_axis_type="log")
-    p2.yaxis.axis_label = "Normalized Std.dev in {}".format(y_range)
-    # plot Below
-    p3 = subplot(on_y='std', size='errmax1',
-                 y_range=(0, y_range[0]))
-    p3.yaxis.axis_label = "Normalized Std.dev < {}".format(y_range[0])
-    p3.xaxis.axis_label = "Bias"
-    c2 = column(p1, p2, p3)
+        # --- std ---
+        # plot Above
+        p1 = subplot(on_y='std', size='errmax1',
+                     y_range=[y_range[1], 'max'], y_axis_type="log",
+                     title="Std.dev")
+        p1.yaxis.axis_label = "Normalized Std.dev > {}".format(y_range[1])
+        # plot Middle
+        p2 = subplot(on_y='std', size='errmax1',
+                     y_range=y_range, y_axis_type="log")
+        p2.yaxis.axis_label = "Normalized Std.dev in {}".format(y_range)
+        # plot Below
+        p3 = subplot(on_y='std', size='errmax1',
+                     y_range=(0, y_range[0]))
+        p3.yaxis.axis_label = "Normalized Std.dev < {}".format(y_range[0])
+        p3.xaxis.axis_label = "Bias"
+        c2 = column(p1, p2, p3)
 
-    r = row(c1, c2)
+        r = row(c1, c2)
 
-    if save_html:
-        html_name = "{}.html".format(grid_point_file_name)
-        print("=>", html_name)
-        output_file(html_name,
-                    title=title)
-        save(r)
+        if save_html:
+            html_name = "{}.html".format(grid_point_file_name)
+            print("=>", html_name)
+            output_file(html_name,
+                        title=title)
+            save(r)
+    else:
+        r = None
+        print("All fields are bit-reproducible !")
     return r
