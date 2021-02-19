@@ -19,12 +19,22 @@ class DavaiJobAssistantPlugin(JobAssistantPlugin):
     )
 
     def plugable_env_setup(self, t, **kw):  # @UnusedVariable
-        t.env.DAVAI_SERVER = 'http://intra.cnrm.meteo.fr/gws/davai'
-        #FIXME: t.env.DAVAI_SERVER = t.conf.DAVAI_SERVER
+        t.env.DAVAI_SERVER = self.masterja.conf.DAVAI_SERVER
 
 
 class IncludesTaskPlugin(object):
     """Provide a method to input usual tools, known as 'Task Includes' in Olive."""
+
+    def guess_pack(self, abspath=True, to_bin=True):
+        """Guess and return pack according to self.conf.pack"""
+        path_split = self.conf.pack.split(self.sh.path.sep)
+        if abspath:
+            guess = path_split
+        else:
+            guess = path_split[-1:]
+        if to_bin:
+            guess += 'bin'
+        return self.sh.path.join(guess)
 
     def _load_usual_tools(self):
         if 'early-fetch' in self.steps:
@@ -52,13 +62,13 @@ class IncludesTaskPlugin(object):
             print()
             #-------------------------------------------------------------------------------
             self.sh.title('Toolbox usual-tools tb_ut03')
-            tb_ut03 = toolbox.input(
+            tb_ut03 = toolbox.executable(
                 role           = 'LFITOOLS',
-                format         = 'gmap',
-                genv           = 'bullx',
+                binmap         = 'gmap',
+                format         = 'bullx',
                 kind           = 'lfitools',
                 local          = 'usualtools/lfitools',
-                remote         = '{0:s}/bin'.format(self.conf.pack),
+                remote         = self.guess_pack(),
                 setcontent     = 'binaries',
             )
             print(self.ticket.prompt, 'tb_ut03 =', tb_ut03)
@@ -78,130 +88,298 @@ class IncludesTaskPlugin(object):
         return tb_ut01, tb_ut02, tb_ut03, tb_ut04
 
 
-class IA4HTaskPlugin(object):
-    pass
-# TODO: plugin for usual IA4H outputs: listing (and as promise), DrHookprof, stdeo...
+class WrappedToolboxPlugin(object):
+    """
+    Provide useful methods for IOs.
+
+    Requires process() method to define locally attributes:
+    self._tb_input
+    self._tb_promise
+    self._tb_exec
+    self._tb_output
+    """
+
+    def _wrapped_input(self, **description):
+        input_number = len(self._tb_input) + 1
+        self.sh.title('Toolbox input {:02}'.format(input_number))
+        r = toolbox.input(**description)
+        self._tb_input.append(r)
+        print(self.ticket.prompt, 'tb input {:02} ='.format(input_number), r)
+        print()
+        return r
+
+    def _wrapped_promise(self, **description):
+        promise_number = len(self._tb_promise) + 1
+        self.sh.title('Toolbox promise {:02}'.format(promise_number))
+        r = toolbox.promise(**description)
+        self._tb_promise.append(r)
+        print(self.ticket.prompt, 'tb promise {:02} ='.format(promise_number), r)
+        print()
+        return r
+
+    def _wrapped_executable(self, **description):
+        exec_number = len(self._tb_exec) + 1
+        self.sh.title('Toolbox executable {:02}'.format(exec_number))
+        r = toolbox.executable(**description)
+        self._tb_exec.append(r)
+        print(self.ticket.prompt, 'tb exec {:02} ='.format(exec_number), r)
+        print()
+        return r
+
+    def _wrapped_output(self, **description):
+        output_number = len(self._tb_output) + 1
+        self.sh.title('Toolbox output {:02}'.format(output_number))
+        r = toolbox.output(**description)
+        self._tb_output.append(r)
+        print(self.ticket.prompt, 'tb output {:02} ='.format(output_number), r)
+        print()
+        return r
 
 
-class DavaiTaskPlugin(object):
+class DavaiTaskPlugin(WrappedToolboxPlugin):
     """Provide useful methods for Davai IOs."""
     experts = []
     lead_expert = None
 
-    def _promised_expertise(self):
-        if 'early-fetch' in self.steps:
-            self.sh.title('Toolbox expertise promise tb_expt_p01')
-            tb_expt_p01 = toolbox.promise(
-                role           = 'TaskSummary',
-                block          = self.tag,
-                experiment     = self.conf.xpid,
-                format         = 'json',
-                hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
-                kind           = 'taskinfo',
-                local          = 'task_summary.[format]',
-                namespace      = self.conf.namespace,
-                nativefmt      = '[format]',
-                scope          = 'itself',
-                task           = 'expertise',
-            )
-            print(self.ticket.prompt, 'tb_expt_p01 =', tb_expt_p01)
-            print()
-        return tb_expt_p01
+    @property
+    def obs_tslots(self):
+        return '/'.join([str(self.conf.timeslots),
+                         self.conf.window_start,
+                         self.conf.window_length])
 
-    def _reference_continuity_expertise(self):
-        if 'early-fetch' in self.steps:
-            self.sh.title('Toolbox reference continuity expertise tb_ref01')
-            tb_ref01 = toolbox.input(
-                role           = 'Reference',
-                namespace      = self.conf.ref_namespace,
-                experiment     = self.conf.ref_xpid,
-                block          = self.tag,
-                fatal          = False,
-                format         = 'json',
-                kind           = 'taskinfo',
-                local          = 'ref_summary.[format]',
-                nativefmt      = '[format]',
-                scope          = 'itself',
-                task           = 'expertise',
-            )
-            print(self.ticket.prompt, 'tb_ref01 =', tb_ref01)
-            print()
-        return tb_ref01
+    @property
+    def NDVar(self):
+        return '4DVar' if int(self.conf.timeslots) > 1 else '3DVar'
 
-    def _reference_consistency_expertise(self):
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:  # probably produced in the same job
-            self.sh.title('Toolbox reference consistency expertise tb_ref_s01')
-            tb_ref_s01 = toolbox.input(
-                role           = 'Reference',
-                experiment     = self.conf.xpid,
-                block          = self.conf.consistency_ref_block,
-                fatal          = False,
-                format         = 'json',
-                kind           = 'taskinfo',
-                local          = 'ref_summary.[format]',
-                nativefmt      = '[format]',
-                scope          = 'itself',
-                task           = 'expertise',
-            )
-            print(self.ticket.prompt, 'tb_ref_s01 =', tb_ref_s01)
-            print()
-        return tb_ref_s01
+    def guess_term(self, force_window_start=False):
+        from bronx.stdtypes.date import Period
+        term = Period(self.conf.cyclestep)
+        if self.NDVar == '4DVar' or force_window_start:
+            # withdraw to window start
+            term = term + Period(self.conf.window_start)
+        return term.isoformat()
 
-    def _expertise(self):
+    def _split_rundate_obstype_couple(self):
+        if 'rundate_obstype' in self.conf:
+            self.conf.rundate, self.conf.obstype = self.conf.rundate_obstype.split('.')
+            toolbox.defaults(date=self.conf.rundate)
+
+    def _obstype_rundate_association(self):
+        """Set rundate as associated with obstype in config."""
+        if 'obstype' in self.conf and 'obstype_rundate_map' in self.conf:
+            obstype = self.conf.obstype
+            assert obstype in self.conf.obstype_rundate_map, \
+                "config file not configurated to loop on obstype '{}' : no rundate associated".format(obstype)
+            self.conf.rundate = self.conf.obstype_rundate_map[obstype]
+            toolbox.defaults(date=self.conf.rundate)
+
+    def guess_pack(self, abspath=True, to_bin=True):
+        """Guess and return pack according to self.conf"""
+        from ia4h_scm.algos import guess_packname
+        return guess_packname(self.conf.IAL_git_ref,
+                              self.conf.gmkpack_compiler_label,
+                              self.conf.gmkpack_packtype,
+                              self.conf.gmkpack_compiler_flag,
+                              abspath=abspath,
+                              to_bin=to_bin)
+
+    def run_expertise(self):
         if 'compute' in self.steps:
-            self.sh.title('Toolbox algo tbexpertise')
-            tbexpertise = toolbox.algo(
-                block          = self.tag,
-                engine         = 'algo',
-                experiment     = self.conf.xpid,
-                experts        = self.experts,
-                lead_expert    = self.lead_expert,
-                fatal_exceptions = self.conf.expertise_fatal_exceptions,
-                ignore_reference = self.conf.ignore_reference,
-                kind           = 'expertise',
-            )
+            self.sh.title('Toolbox algo = tbexpertise')
+            tbexpertise = toolbox.algo(**self._algo_expertise())
             print(self.ticket.prompt, 'tbexpertise =', tbexpertise)
             print()
-        return tbexpertise
+            self.component_runner(tbexpertise, [None])
+            #tbexpertise.run()
+
+    def output_block(self):
+        """Output block method: TO BE OVERWRITTEN in real tasks."""
+        return '.'.join([self.tag])
+
+    def _tag_suffix(self):
+        """Get the suffix part of the tag, in case of a LoopFamily-ed task."""
+        return self.tag[len(self._configtag):]
+
+    @property
+    def _expertise_namespace(self):
+        return 'vortex.multi.fr' if self.conf.archive_as_ref else 'vortex.cache.fr'
+
+    def _reference_continuity_listing(self):
+        return dict(
+            role           = 'Reference',
+            binary         = '[model]',
+            block          = self.output_block(),
+            experiment     = self.conf.ref_xpid,
+            fatal          = False,
+            format         = 'ascii',
+            kind           = 'plisting',
+            local          = 'ref_listing.[format]',
+            namespace      = self.conf.ref_namespace,
+            seta           = '1',
+            setb           = '1',
+            task           = self._configtag)
+
+    def _promised_expertise(self):
+        return dict(
+            role           = 'TaskSummary',
+            block          = self.output_block(),
+            experiment     = self.conf.xpid,
+            format         = 'json',
+            hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
+            kind           = 'taskinfo',
+            local          = 'task_summary.[format]',
+            namespace      = self._expertise_namespace,
+            nativefmt      = '[format]',
+            scope          = 'itself',
+            task           = 'expertise')
+
+    def _reference_continuity_expertise(self):
+        return dict(
+            role           = 'Reference',
+            namespace      = self.conf.ref_namespace,
+            experiment     = self.conf.ref_xpid,
+            block          = self.output_block(),
+            fatal          = False,
+            format         = 'json',
+            kind           = 'taskinfo',
+            local          = 'ref_summary.[format]',
+            nativefmt      = '[format]',
+            scope          = 'itself',
+            task           = 'expertise')
+
+    def _reference_consistency_expertise(self):
+        return dict(
+            role           = 'Reference',
+            experiment     = self.conf.xpid,
+            block          = self.conf.consistency_ref_block,
+            fatal          = False,
+            format         = 'json',
+            kind           = 'taskinfo',
+            local          = 'ref_summary.[format]',
+            nativefmt      = '[format]',
+            scope          = 'itself',
+            task           = 'expertise')
+
+    def _algo_expertise(self):
+        return dict(
+            block          = self.output_block(),
+            engine         = 'algo',
+            experiment     = self.conf.xpid,
+            experts        = self.experts,
+            lead_expert    = self.lead_expert,
+            fatal_exceptions = self.conf.expertise_fatal_exceptions,
+            ignore_reference = self.conf.ignore_reference,
+            kind           = 'expertise')
 
     def _output_expertise(self):
-        if 'late-backup' in self.steps:
-            self.sh.title('Toolbox expertise output tb_expt01')
-            tb_expt01 = toolbox.output(
-                role           = 'TaskSummary',
-                kind           = 'taskinfo',
-                block          = self.tag,
-                experiment     = self.conf.xpid,
-                hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
-                format         = 'json',
-                local          = 'task_summary.[format]',
-                namespace      = self.conf.namespace,
-                nativefmt      = '[format]',
-                promised       = True,
-                scope          = 'itself',
-                task           = 'expertise',
-            )
-            print(self.ticket.prompt, 'tb_expt01 =', tb_expt01)
-            print()
-        return tb_expt01
+        return dict(
+            role           = 'TaskSummary',
+            kind           = 'taskinfo',
+            block          = self.output_block(),
+            experiment     = self.conf.xpid,
+            hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
+            format         = 'json',
+            local          = 'task_summary.[format]',
+            namespace      = self._expertise_namespace,
+            nativefmt      = '[format]',
+            promised       = True,
+            scope          = 'itself',
+            task           = 'expertise')
 
     def _output_comparison_expertise(self):
-        if 'late-backup' in self.steps:
-            self.sh.title('Toolbox expertise output tb_expt02')
-            tb_expt02 = toolbox.output(
-                role           = 'TaskAgainstRef',
-                kind           = 'taskinfo',
-                block          = self.tag,
-                experiment     = self.conf.xpid,
-                hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
-                format         = 'json',
-                local          = 'task_[scope].[format]',
-                namespace      = self.conf.namespace,
-                nativefmt      = '[format]',
-                scope          = 'continuity,consistency',
-                task           = 'expertise',                
-            )
-            print(self.ticket.prompt, 'tb_expt02 =', tb_expt02)
-            print()
-        return tb_expt02
+        return dict(
+            role           = 'TaskAgainstRef',
+            kind           = 'taskinfo',
+            block          = self.output_block(),
+            experiment     = self.conf.xpid,
+            hook_train     = ('davai.hooks.take_the_DAVAI_train', self.conf.expertise_fatal_exceptions),
+            format         = 'json',
+            local          = 'task_[scope].[format]',
+            nativefmt      = '[format]',
+            scope          = 'continuity,consistency',
+            task           = 'expertise')
 
+
+class DavaiIALTaskPlugin(DavaiTaskPlugin, IncludesTaskPlugin):
+    """Provide useful usual outputs for Davai IAL tests."""
+
+    def _promised_listing(self):  # Promised to be able to export its cache/archive path to ciboulai
+        return dict(
+            role           = 'Listing',
+            binary         = '[model]',
+            block          = self.output_block(),
+            delayed        = True,
+            experiment     = self.conf.xpid,
+            format         = 'ascii',
+            kind           = 'plisting',
+            local          = 'NODE.001_01',
+            namespace      = self._expertise_namespace,
+            seta           = '1',
+            setb           = '1',
+            task           = self._configtag)
+
+    def _output_listing(self):
+        return dict(
+            role           = 'Listing',
+            binary         = '[model]',
+            block          = self.output_block(),
+            delayed        = True,
+            experiment     = self.conf.xpid,
+            format         = 'ascii',
+            kind           = 'plisting',
+            local          = 'NODE.{glob:a:\d+}_{glob:b:\d+}',
+            namespace      = self._expertise_namespace,
+            seta           = '[glob:a]',
+            setb           = '[glob:b]',
+            task           = self._configtag)
+
+    def _output_stdeo(self):
+        return dict(
+            role           = 'StdOut',
+            binary         = '[model]',
+            block          = self.output_block(),
+            experiment     = self.conf.xpid,
+            format         = 'ascii',
+            kind           = 'plisting',
+            local          = 'stdeo.{glob:n:\d+}',
+            part           = 'stdeo.[glob:n]',
+            task           = self._configtag)
+
+    def _output_drhook_profiles(self):
+        return dict(
+            role           = 'DrHookProfiles',
+            binary         = '[model]',
+            block          = self.output_block(),
+            experiment     = self.conf.xpid,
+            fatal          = self.conf.drhook_profiling,
+            format         = 'ascii',
+            kind           = 'drhook',
+            local          = 'drhook.prof.{glob:n:\d+}',
+            mpi            = '[glob:n]',
+            task           = self._configtag)
+
+
+def hook_adjust_DFI(t, rh, NDVar):
+    """
+    Runtime tuning of DFI in Screening:
+
+    - unplug DFI in 3DVar case
+    - or tune number of steps to timestep
+    """
+    if NDVar == '3DVar':
+        # because no DFI in 3DVar screening (and avoiding to duplicate model namelists)
+        print("Unplug DFI")
+        if 'NAMINI' in rh.contents:
+            rh.contents['NAMINI']['LDFI'] = False
+            rh.contents['NAMINI'].delvar('NEINI')
+        if 'NAMDFI' in rh.contents:
+            rh.contents['NAMDFI'].delvar('NEDFI')
+            rh.contents['NAMDFI'].delvar('NTPDFI')
+            rh.contents['NAMDFI'].delvar('TAUS')
+        if 'NAMRIP' in rh.contents:
+            rh.contents['NAMRIP']['CSTOP'] = 'h0'
+    else:
+        # Because timestep is not that of the operational screening
+        print("Adjust NSTDFI to timestep")
+        rh.contents['NAMDFI']['NSTDFI'] = 6
+    rh.save()
