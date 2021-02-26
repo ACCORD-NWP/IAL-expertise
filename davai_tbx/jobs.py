@@ -4,25 +4,9 @@
 from __future__ import print_function, absolute_import, unicode_literals, division
 
 from vortex import toolbox
-from vortex.layout.jobs import JobAssistantPlugin
 
 
-class DavaiJobAssistantPlugin(JobAssistantPlugin):
-    """JobAssistant plugin for Davai."""
-    _footprint = dict(
-        info = 'Davai JobAssistant Plugin',
-        attr = dict(
-            kind = dict(
-                values = ['davai', ]
-            ),
-        ),
-    )
-
-    def plugable_env_setup(self, t, **kw):  # @UnusedVariable
-        t.env.DAVAI_SERVER = self.masterja.conf.DAVAI_SERVER
-
-
-class IncludesTaskPlugin(object):
+class IncludesTaskMixin(object):
     """Provide a method to input usual tools, known as 'Task Includes' in Olive."""
 
     def guess_pack(self, abspath=True, to_bin=True):
@@ -88,16 +72,18 @@ class IncludesTaskPlugin(object):
         return tb_ut01, tb_ut02, tb_ut03, tb_ut04
 
 
-class WrappedToolboxPlugin(object):
+class WrappedToolboxMixin(object):
     """
     Provide useful methods for IOs.
 
-    Requires process() method to define locally attributes:
-    self._tb_input
-    self._tb_promise
-    self._tb_exec
-    self._tb_output
+    Requires process() method to call _wrapped_init() to set additional attributes
     """
+
+    def _wrapped_init(self):
+        self._tb_input = []
+        self._tb_promise = []
+        self._tb_exec = []
+        self._tb_output = []
 
     def _wrapped_input(self, **description):
         input_number = len(self._tb_input) + 1
@@ -136,7 +122,7 @@ class WrappedToolboxPlugin(object):
         return r
 
 
-class DavaiTaskPlugin(WrappedToolboxPlugin):
+class DavaiTaskMixin(WrappedToolboxMixin):
     """Provide useful methods for Davai IOs."""
     experts = []
     lead_expert = None
@@ -300,7 +286,7 @@ class DavaiTaskPlugin(WrappedToolboxPlugin):
             task           = 'expertise')
 
 
-class DavaiIALTaskPlugin(DavaiTaskPlugin, IncludesTaskPlugin):
+class DavaiIALTaskMixin(DavaiTaskMixin, IncludesTaskMixin):
     """Provide useful usual outputs for Davai IAL tests."""
 
     def _promised_listing(self):  # Promised to be able to export its cache/archive path to ciboulai
@@ -358,28 +344,3 @@ class DavaiIALTaskPlugin(DavaiTaskPlugin, IncludesTaskPlugin):
             mpi            = '[glob:n]',
             task           = self._configtag)
 
-
-def hook_adjust_DFI(t, rh, NDVar):
-    """
-    Runtime tuning of DFI in Screening:
-
-    - unplug DFI in 3DVar case
-    - or tune number of steps to timestep
-    """
-    if NDVar == '3DVar':
-        # because no DFI in 3DVar screening (and avoiding to duplicate model namelists)
-        print("Unplug DFI")
-        if 'NAMINI' in rh.contents:
-            rh.contents['NAMINI']['LDFI'] = False
-            rh.contents['NAMINI'].delvar('NEINI')
-        if 'NAMDFI' in rh.contents:
-            rh.contents['NAMDFI'].delvar('NEDFI')
-            rh.contents['NAMDFI'].delvar('NTPDFI')
-            rh.contents['NAMDFI'].delvar('TAUS')
-        if 'NAMRIP' in rh.contents:
-            rh.contents['NAMRIP']['CSTOP'] = 'h0'
-    else:
-        # Because timestep is not that of the operational screening
-        print("Adjust NSTDFI to timestep")
-        rh.contents['NAMDFI']['NSTDFI'] = 6
-    rh.save()
