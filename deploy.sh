@@ -18,8 +18,6 @@ DAVAI_DIR="public/davai/$VERSION"
 
 
 # Platforms to push onto
-beaufix=1
-prolix=1
 belenos=1
 taranis=1
 sxcoope1=1
@@ -31,18 +29,6 @@ notests="--exclude tests"
 
 # Rsync
 logger="davai-$VERSION deployed on:\n"
-echo "------------------------------------------------------"
-if [ "$beaufix" == 1 ]; then
-  echo "...beaufix..."
-  rsync -avL * beaufix:$DAVAI_DIR $notests
-  logger="$logger - beaufix\n"
-fi
-echo "------------------------------------------------------"
-if [ "$prolix" == 1 ]; then
-  echo "...prolix..."
-  rsync -avL * prolix:$DAVAI_DIR $notests
-  logger="$logger - prolix\n"
-fi
 echo "------------------------------------------------------"
 if [ "$belenos" == 1 ]; then
   echo "...belenos..."
