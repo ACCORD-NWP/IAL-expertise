@@ -21,7 +21,7 @@ from davai_tbx.experts.fields import scatter_fields_process_summary
 
 
 def main(xpid, vapp, vconf,
-         block, model, cutoff, date):
+         block, model, cutoff, member, date):
     """Get comparison and plot."""
     found = toolbox.rload(kind='taskinfo',
                           scope='continuity',
@@ -33,6 +33,7 @@ def main(xpid, vapp, vconf,
                           block=block,
                           model=model,
                           cutoff=cutoff,
+                          member=member,
                           date=date,
                           local='{}.expertise.json'.format(xpid))
     found[0].get()
@@ -60,6 +61,9 @@ if __name__ == '__main__':
     parser.add_argument('--cutoff',
                         help="Vortex cutoff",
                         default='prod')
+    parser.add_argument('--member',
+                        help="Vortex member",
+                        default=None)
     parser.add_argument('-d', '--date',
                         help="Vortex date",
                         required=True)
