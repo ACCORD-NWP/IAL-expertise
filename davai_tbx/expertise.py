@@ -10,7 +10,7 @@ from footprints import proxy as fpx
 from bronx.fancies import loggers
 from bronx.stdtypes import date
 
-from .util import TaskSummary
+from .util import TaskSummary, context_info_for_task_summary
 from .experts import ExpertError
 
 logger = loggers.getLogger(__name__)
@@ -23,12 +23,23 @@ task_status = {'X':{'symbol':'X',
                       'short':'Crashed as Ref',
                       'text':'Crashed: AS IN REFERENCE, the task ended abnormally'},
                'X:R?':{'symbol':'X:R?',
-                      'short':'Crashed : Ref too ?',
+                      'short':'Crashed : as Ref ?',
                       'text':'Crashed: the task ended abnormally, but REFERENCE might as well ?'},
                'E':{'symbol':'E',
                     'short':'Ended',
-                    'text':'Ended: Task ended without crash.'}
+                    'text':'Ended: Task ended without crash.'},
+               'S':{'symbol':'S',
+                    'short':'Started...',
+                    'text':'Started: Task has started, wait for it...'},
                }
+
+
+def write_started_task_summary(context, out_filename):
+    """Write context infos into a TaskSummary file."""
+    task_summary = TaskSummary()
+    task_summary['Status'] = task_status['S']
+    task_summary['Context'] = context_info_for_task_summary(context)
+    task_summary.dump(out_filename)
 
 
 class ExpertBoard(object):
@@ -189,6 +200,10 @@ class ExpertBoard(object):
         comp_summary['comparisonStatus'] = {'symbol':'0',
                                             'short':'- No ref -',
                                             'text':'No reference to be compared to'}
+
+    def remember_context(self, context):
+        """Save info from context into task summary."""
+        self.task_summary['Context'] = context_info_for_task_summary(context)
 
     def remember_listings(self, promises, continuity):  # TODO: consistency too !
         """Write paths to listings in cache/archive into summaries."""

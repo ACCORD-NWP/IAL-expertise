@@ -157,7 +157,7 @@ class XPMetadata(object):
         return {k.lower():self._dict.get(k.lower())
                 for k in self.env_catalog_variables
                 if k.lower() in self._dict}
-    
+
     @classmethod
     def _get_env_catalog_details(cls, env):
         from gco.tools import uenv, genv
@@ -171,13 +171,24 @@ class XPMetadata(object):
             details = ['%s="%s"' % (k, v)
                        for (k, v) in genv.autofill(env).items()]
         return details
-    
+
     def _set_details(self):
         for k, env in self._which_env_catalog_details.items():
             details = self._get_env_catalog_details(env)
             self._dict['{}_details'.format(k.lower())] = '<br>'.join(details)
-    
+
     def write(self):
         """Dump in file (xpinfo.json)."""
         with open('xpinfo.json', 'w') as out:
             json.dump(self._dict, out, indent=4, sort_keys=True)
+
+
+def context_info_for_task_summary(context):
+    """Get some infos from context for task summary."""
+    session = {'rundir':context.rundir}
+    for k in ('MTOOL_STEP_ABORT', 'MTOOL_STEP_DEPOT'):
+        v = context.env.get(k, None)
+        if v:
+            session[k] = v
+    return session
+
