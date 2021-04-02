@@ -28,17 +28,19 @@ task_status = {'X':{'symbol':'X',
                'E':{'symbol':'E',
                     'short':'Ended',
                     'text':'Ended: Task ended without crash.'},
-               'S':{'symbol':'S',
-                    'short':'Started...',
-                    'text':'Started: Task has started, wait for it...'},
+               '...':{'symbol':'(...)',
+                      'short':'(...)',
+                      'text':'Task is expected : fetch step started, unknown status since ' +
+                             '(possible reasons: dependancy, cancellation, fetch error, timeout...)'},
                }
 
 
-def write_started_task_summary(context, out_filename):
+def write_expected_task_summary(context, out_filename):
     """Write context infos into a TaskSummary file."""
     task_summary = TaskSummary()
-    task_summary['Status'] = task_status['S']
+    task_summary['Status'] = task_status['...']
     task_summary['Context'] = context_info_for_task_summary(context)
+    task_summary['Updated'] = date.utcnow().isoformat().split('.')[0]
     task_summary.dump(out_filename)
 
 
