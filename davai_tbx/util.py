@@ -190,7 +190,7 @@ def context_info_for_task_summary(context):
         v = context.env.get(k, None)
         if v:
             info[k] = v
-    if 'MTOOL_STEP_ABORT' in info and 'MTOOL_STEP_SPOOL' in info:
+    if context.rundir and 'MTOOL_STEP_ABORT' in info and 'MTOOL_STEP_SPOOL' in info:
         abort_dir = os.path.join(info['MTOOL_STEP_ABORT'],
                                  context.rundir[len(info['MTOOL_STEP_SPOOL'])+1:])
         info['(if aborted)'] = abort_dir

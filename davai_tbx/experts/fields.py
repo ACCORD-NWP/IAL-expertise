@@ -410,7 +410,8 @@ class FieldsInFileExpert(OutputExpert):
                                                              fatal_exceptions=self.fatal_exceptions),
                                     individual_instructions=dict(test=[p[0] for p in pairs],
                                                                  ref=[p[1] for p in pairs]),
-                                    scheduler=fpx.scheduler(limit='threads', max_threads=0, binded=True),
+                                    scheduler=fpx.scheduler(limit='threads', max_threads=0, binded=False),  # issue with nmipt
+                                    #scheduler=fpx.scheduler(limit='threads', max_threads=0, binded=True),
                                     print_report=lambda arg: None)
                 for file_report in report['workers_report']:
                     test_filename = file_report['report'][0]
