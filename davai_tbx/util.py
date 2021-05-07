@@ -113,8 +113,7 @@ class XPMetadata(object):
                       # absent-safe
                       'ref_xpid':ref_xpid,
                       'usecase':os.environ.get('USECASE'),
-                      'git_branch':os.environ.get('IA4H_GITREF'),  # CLEANME: to be pruned at some point
-                      'IA4H_gitref':os.environ.get('IA4H_GITREF'),
+                      'IAL_git_ref':os.environ.get('IAL_GIT_REF'),
                       'comment':os.environ.get('COMMENT'),
                       }
         self._dict.update(self._gmkpack_info())
@@ -122,7 +121,8 @@ class XPMetadata(object):
             e = os.environ.get(k)
             if e:
                 self.set(k.lower(), e)
-        for k in ('INPUT_STORE', 'INPUT_STORE_LAM', 'INPUT_STORE_GLOBAL'):
+        for k in ('INPUT_STORE', 'INPUT_STORE_LAM', 'INPUT_STORE_GLOBAL',
+                  'INPUT_SHELF', 'INPUT_SHELF_LAM', 'INPUT_SHELF_GLOBAL'):
             s = os.environ.get(k)
             if s:
                 self.set(k.lower(), s)
