@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-DAVAI toolbox package.
+IAL expertise package: expertise outputs of IAL tasks.
 """
 from __future__ import print_function, absolute_import, division, unicode_literals
 
-__version__ = '1.0.8'
+__version__ = '1.0.9'
 
-from . import experts, expertise
+from . import experts, task

@@ -17,7 +17,7 @@ import common  # @UnusedImport
 package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, package_path)
 
-from davai_tbx.experts.fields import scatter_fields_process_summary
+from ial_expertise.experts.fields import scatter_fields_process_summary
 
 
 def main(xpid, vapp, vconf,

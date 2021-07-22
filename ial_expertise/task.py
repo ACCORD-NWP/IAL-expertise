@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-expertise: tools to analyse the outputs of a job and state about its validation,
-if necessary by comparison to a reference.
+Task: tools to analyse the outputs of a task and state about its validation.
 """
+
 from __future__ import print_function, absolute_import, division, unicode_literals
+import six
+
+import json
+import sys
 
 from footprints import proxy as fpx
 from bronx.fancies import loggers
 from bronx.stdtypes import date
 
-from .util import TaskSummary, context_info_for_task_summary
 from .experts import ExpertError
 
 logger = loggers.getLogger(__name__)
@@ -35,13 +38,40 @@ task_status = {'X':{'symbol':'X',
                }
 
 
-def write_expected_task_summary(context, out_filename):
-    """Write context infos into a TaskSummary file."""
-    task_summary = TaskSummary()
-    task_summary['Status'] = task_status['...']
-    task_summary['Context'] = context_info_for_task_summary(context)
-    task_summary['Updated'] = date.utcnow().isoformat().split('.')[0]
-    task_summary.dump(out_filename)
+class TaskSummary(dict):
+    """
+    A summary of a task contains info about the job, according to a series of
+    Experts.
+
+    Each Expert is a key of the TaskSummary.
+    """
+
+    def __init__(self, from_file=None):
+        if from_file is not None:
+            self._load(from_file)
+
+    def dump(self, out=sys.stdout):
+        """Dump the TaskSummary into a JSON file."""
+        if isinstance(out, six.string_types):
+            close = True
+            out = open(out, 'w')
+        else:
+            close = False
+        json.dump(self, out, indent=4, sort_keys=True)
+        if close:
+            out.close()
+
+    def _load(self, filein):
+        if isinstance(filein, six.string_types):
+            close = True
+            filein = open(filein, 'r')
+        else:
+            close = False
+        asdict = json.load(filein)
+        if close:
+            filein.close()
+        self.clear()
+        self.update(asdict)
 
 
 class ExpertBoard(object):
@@ -203,9 +233,9 @@ class ExpertBoard(object):
                                             'short':'- No ref -',
                                             'text':'No reference to be compared to'}
 
-    def remember_context(self, context):
+    def remember_context(self, context_info):
         """Save info from context into task summary."""
-        self.task_summary['Context'] = context_info_for_task_summary(context)
+        self.task_summary['Context'] = context_info
 
     def remember_listings(self, promises, continuity):  # TODO: consistency too !
         """Write paths to listings in cache/archive into summaries."""

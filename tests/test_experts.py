@@ -13,7 +13,7 @@ import time
 import epygram
 from epygram import epylog
 
-from davai_tbx.experts import oops, util
+from ial_expertise.experts import oops, util
 
 timing = False
 

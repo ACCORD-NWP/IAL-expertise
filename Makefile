@@ -18,8 +18,8 @@ pushrelease:
 
 # Experts doc
 experts_doc:
-	tbinterface.py -f json -c outputexpert -n davai_tbx
-	mv tbinterface_outputexpert.json davai_tbx/experts/.
+	tbinterface.py -f json -c outputexpert -n ial_expertise
+	mv tbinterface_outputexpert.json ial_expertise/experts/.
 
 clean:
 	find . -name "*.pyc"       -print0 | xargs -0r rm
