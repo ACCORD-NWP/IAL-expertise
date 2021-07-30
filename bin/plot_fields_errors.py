@@ -14,8 +14,8 @@ from vortex import toolbox
 import common  # @UnusedImport
 
 # Automatically set the python path
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.insert(0, package_path)
+repo_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, os.path.join(repo_path, 'src'))
 
 from ial_expertise.experts.fields import scatter_fields_process_summary
 
