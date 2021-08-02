@@ -31,18 +31,18 @@ task_status = {'X':{'symbol':'X',
                'E':{'symbol':'E',
                     'short':'Ended',
                     'text':'Ended: Task ended without crash.'},
-               'I..':{'symbol':'I..',
-                      'short':'I..',
-                      'text':'Waiting for task : Input step started, unknown status since ' +
-                             '(possible reasons: fetch error, dependancy...)'},
-               'C..':{'symbol':'C..',
-                      'short':'C..',
-                      'text':'Waiting for task : Compute step started, unknown status since ' +
-                             '(possible reasons: cancellation, timeout...)'},
-               'O..':{'symbol':'O..',
-                      'short':'O..',
-                      'text':'Waiting for task : Output step started, unknown status since ' +
-                             '(possible reasons: resource absence, ...)'},
+               'I...':{'symbol':'(I...)',
+                       'short':'(Inputs...)',
+                       'text':'Waiting for task : Input step started, unknown status since ' +
+                              '(possible reasons: fetch error, dependancy...)'},
+               'C...':{'symbol':'(C...)',
+                       'short':'(Compute...)',
+                       'text':'Waiting for task : Compute step started, unknown status since ' +
+                              '(possible reasons: cancellation, timeout...)'},
+               'O...':{'symbol':'(O...)',
+                       'short':'(Outputs...)',
+                       'text':'Waiting for task : Output step started, unknown status since ' +
+                              '(possible reasons: resource absence, ...)'},
                }
 
 
