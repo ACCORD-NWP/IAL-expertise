@@ -333,7 +333,7 @@ class FieldsInFileExpert(OutputExpert):
         pairs = []
         # find local files matching references
         for ref in ref_filenames:
-            if ref not in os.listdir(os.getcwd()):
+            if not os.path.exists(ref):
                 message = "Reference file: '{}' not found'.".format(ref)
                 if self.fatal_exceptions:
                     raise ExpertError(message)
@@ -345,8 +345,7 @@ class FieldsInFileExpert(OutputExpert):
             for prefix in (self.ref_prefix, self.cnty_prefix, self.csty_prefix):
                 if f.startswith(prefix):
                     f = f[len(prefix):]
-            #f = ref.lstrip(self.ref_prefix).lstrip(self.cnty_prefix).lstrip(self.csty_prefix)
-            if f not in os.listdir(os.getcwd()):
+            if not os.path.exists(f):
                 message = "Reference file: '{}' has no local output equivalent '{}'.".format(ref, f)
                 if self.fatal_exceptions:
                     raise ExpertError(message)
