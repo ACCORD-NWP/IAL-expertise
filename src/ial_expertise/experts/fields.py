@@ -301,13 +301,13 @@ class FieldsInFileExpert(OutputExpert):
         self._find_files_to_parse()
         for filename in self.files:
             r = epygram.formats.resource(filename, 'r')
-            self.files[filename] = {f:{} for f in r.listfields()}
+            self.files[filename] = {str(f):{} for f in r.listfields()}
             if self.compute_stats:
-                for f in self.files[filename]:
+                for f in r.listfields():
                     fld = r.readfield(f)
-                    self.files[filename][f]['min'] = fld.min()
-                    self.files[filename][f]['avg'] = fld.mean()
-                    self.files[filename][f]['max'] = fld.max()
+                    self.files[filename][str(f)]['min'] = fld.min()
+                    self.files[filename][str(f)]['avg'] = fld.mean()
+                    self.files[filename][str(f)]['max'] = fld.max()
 
     def summary(self):
         summary = {'Number of files':len(self.files),
