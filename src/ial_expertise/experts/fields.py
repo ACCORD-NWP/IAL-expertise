@@ -57,6 +57,12 @@ class NormsChecker(OutputExpert):
                 optional = True,
                 default = 'last_spectral',
             ),
+            hide_equal_norms = dict(
+                info = "Hide fields which norms are equal.",
+                optional = True,
+                type = bool,
+                default = False,
+            ),
             plot_spectral = dict(
                 info = "Plot evolution of spectral norms difference (number of # digits) to SVG.",
                 optional = True,
@@ -128,6 +134,7 @@ class NormsChecker(OutputExpert):
 
     @classmethod
     def _compare_2normsets(cls, testset, refset,
+                           hide_equal_norms=False,
                            plot_spectral=False,
                            validation_threshold=NORMSDIGITS_BITREPRO):
         """
@@ -142,7 +149,8 @@ class NormsChecker(OutputExpert):
         arpifs_listings.norms.compare_normsets(testset, refset, mode='text',
                                                which='all',
                                                out=comp,
-                                               onlymaxdiff=False)
+                                               onlymaxdiff=False,
+                                               hide_equal_norms=hide_equal_norms)
         comp.seek(0)
         worst_digit = arpifs_listings.norms.compare_normsets(testset, refset, mode='get_worst',
                                                              which='all',
@@ -184,6 +192,7 @@ class NormsChecker(OutputExpert):
         ref_listing_in.parse_patterns(flush_after_reading=True)
         return self._compare_2normsets(self.listing.normset,
                                        ref_listing_in.normset,
+                                       hide_equal_norms=self.hide_equal_norms,
                                        plot_spectral=self.plot_spectral,
                                        validation_threshold=validation_threshold)
 
