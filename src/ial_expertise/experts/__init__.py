@@ -92,11 +92,13 @@ class OutputExpert(footprints.FootprintBase):
     @classmethod
     def filter_one_resource(cls, references, rkind):
         """Get kind=rkind resource, only one."""
-        references = [r for r in references if r.resource.kind == rkind]
+        if isinstance(rkind, str):
+            rkind = (rkind,)
+        references = [r for r in references if r.resource.kind in rkind]
         if len(references) > 1:
-            raise ExpertError("Too many kind='{}' resources provided".format(rkind))
+            raise ExpertError("Too many resources of kind '{}' provided".format(rkind))
         elif len(references) < 1:
-            raise ExpertError("No kind='{}' resources provided".format(rkind))
+            raise ExpertError("No resource of kind '{}' provided".format(rkind))
         else:
             return references[0]
 
@@ -104,7 +106,7 @@ class OutputExpert(footprints.FootprintBase):
         """
         Compare to a reference summary.
         """
-        ref_summary = self.filter_one_resource(references, rkind='taskinfo')
+        ref_summary = self.filter_one_resource(references, rkind=('taskinfo', 'statictaskinfo'))
         with io.open(ref_summary.container.localpath(), 'r') as _ref:
             ref_summary_in = json.load(_ref)
         try:
