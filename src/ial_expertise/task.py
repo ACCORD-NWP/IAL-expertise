@@ -200,7 +200,7 @@ class ExpertBoard(object):
                     elif comp_summary[e.kind]['Validated'] is False:
                         status = {'symbol':'KO',
                                   'short':'KO',
-                                  'text':'Fail: "{}" is False'.format(comp_summary[e.kind]['Validated means'])}
+                                  'text':'Fail: "{}" is False'.format(comp_summary[e.kind].get('Validated means', '(?)'))}
                 elif e.kind in comp_summary and comp_summary[e.kind].get('Comparison') == 'Failed':
                     # else, if we found at least one comparison failure, raise it as status
                     status = {'symbol':'!',

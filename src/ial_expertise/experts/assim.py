@@ -103,8 +103,7 @@ class JoTable(OutputExpert):
                         'Bit-reproducible':all([abs(maxdiff[p]['diff']) <= epsilon for p in maxdiff.keys()]),
                         'mainMetrics':'Maximum Relative diff in Jo/n'}
             else:
-                comp = {'Validated':False,
-                        'No Jo-Table available in':'test'}
+                comp = {'No Jo-Table available in':'test'}
         else:
             comp = {'No comparison':'No Jo-tables'}
         return comp
