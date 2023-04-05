@@ -11,6 +11,7 @@ import numpy as np
 import json
 import io
 
+from ial_expertise import package_rootdir
 from . import OutputExpert, ExpertError
 from .util import ppp, EXTENDED_FLOAT_RE
 
@@ -102,18 +103,18 @@ class DrHook(OutputExpert):
         if len(self.drhookfiles) == 0:
             raise ExpertError('No drhook files found.')
 
-    def _merge_walltime(self, tool):
-        self.merged_drhook = subprocess.check_output([tool,] + self.drhookfiles).decode('utf-8').split('\n')[:-1]  # to remove trailing empty line
+    def _merge_walltime(self, stat):
+        script = os.path.join(package_rootdir, 'bin', 'drhook_merge_walltime_{}'.format(stat))
+        out = subprocess.check_output([script,] + self.drhookfiles)
+        self.merged_drhook = out.decode('utf-8').split('\n')[:-1]  # to remove trailing empty line
 
     def _merge_walltime_ave(self):
         """Merge walltime of inner routines (self) by the average."""
-        tool = '/home/gmap/mrpm/khatib/public/bin/drhook_merge_walltime_ave'
-        self._merge_walltime(tool)
+        self._merge_walltime('ave')
 
     def _merge_walltime_max(self):
         """Merge walltime of inner routines (self) by the maximum."""
-        tool = '/home/gmap/mrpm/khatib/public/bin/drhook_merge_walltime_max'
-        self._merge_walltime(tool)
+        self._merge_walltime('max')
 
     def _get_walltime_max(self):
         """Return the walltime over all MPI-tasks."""
@@ -135,7 +136,7 @@ class DrHook(OutputExpert):
             match = self._re_openmp_threads.match(l)
             if match:
                 return int(match.group('openmp'))
-    
+
     @classmethod
     def compare_by_routine(cls, test_summary, ref_summary, drhook_kind):
         test_routine_profile = cls.parse_routines(drhook_kind, test_summary['_DrHookProfile'])
