@@ -391,3 +391,43 @@ class OOPSInterpolExpert(OOPSTestExpert):
                 'Diff in common digits':ppi(int(round(digits_diff))),
                 'Float diff in common digits':digits_diff,
                 'mainMetrics':'Diff in common digits'}
+
+
+class OOPSmodelADExpert(OOPSTestExpert):
+
+    _footprint = dict(
+        info = 'Read and compare *adjoint-test result* written by OOPS-test:mix/test_adjoint in standard output file.',
+        attr = dict(
+            kind = dict(
+                values = ['oops:mix/test_adjoint',],
+            ),
+            digits_validation_threshold = dict(
+                info = "Minimum value for the number of common digits in the AD-test.",
+                type = int,
+                optional = True,
+                default = JOAD_DIGITS,
+            ),
+        )
+    )
+
+    _re_test = re.compile('.*\[CDATA\[' +
+                          '<dx1,Mtdx2> = (?P<dx1Mtdx2>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          '<Mdx1,dx2> = (?P<Mdx1dx2>' + EXTENDED_FLOAT_RE + ')\s+' +
+                          'digits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
+
+    def summary(self):
+        return {'dx1,Mtdx2':float(self.parsedOut['dx1Mtdx2']),
+                'Mdx1,dx2':float(self.parsedOut['Mdx1dx2']),
+                'Digits':min(float(self.parsedOut['digits']), 16)}
+
+    @classmethod
+    def compare_2summaries(cls, test, ref, validation_threshold=JOAD_DIGITS):
+        """Compare two AD tests."""
+        digits_diff = test['Digits'] - ref['Digits']
+        return {'Validated means':'Enough digits common between <dx1,Mtdx2> and <Mdx1,dx2> (scalar products); enough == as many as reference or > {}'.format(validation_threshold),
+                'Validated':int(round(digits_diff)) >= 0 or test['Digits'] >= validation_threshold,
+                'Common digits in AD-test >= reference ()'.format(ref['Digits']):int(round(digits_diff)) >= 0,
+                'Common digits in AD-test >= {}'.format(validation_threshold):test['Digits'] >= validation_threshold,
+                'Diff in common digits':ppi(int(round(digits_diff))),
+                'Float diff in common digits':digits_diff,
+                'mainMetrics':'Diff in common digits'}
