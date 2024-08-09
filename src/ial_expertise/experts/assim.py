@@ -85,11 +85,13 @@ class JoTable(OutputExpert):
             if len(test) > 0:
                 # if not the same number of JoTables
                 if len(set(test.keys())) != len(set(ref.keys())):
-                    # dirty hack: del NSIM4D= 1
-                    for tset in (test, ref):
-                        nsim4d1 = [k for k in tset.keys() if re.match('.*NSIM4D=\s*1.*', k)]
-                        if len(nsim4d1) == 1:
-                            tset._content.pop(nsim4d1[0])
+                    # ignore the ones present in one side only
+                    test_set = set(test.keys())
+                    ref_set = set(ref.keys())
+                    for k in test_set.difference(ref_set):
+                        test._content.pop(k)
+                    for k in ref_set.difference(test_set):
+                        ref._content.pop(k)
                 # compute diff
                 diff = test.compute_diff(ref)
                 maxdiff = test.maxdiff(ref)
