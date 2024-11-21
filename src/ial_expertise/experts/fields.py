@@ -267,9 +267,9 @@ class FieldsInFileExpert(OutputExpert):
                      # coupling files
                      '(?P<prefix>CPLOUT)\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
                      # pgd files
-                     '(?P<prefix>PGD)\.fa',
+                     '(?P<prefix>PGD)\.fa$',
                      # prep files
-                     '(?P<prefix>PREP1_interpolated)\.fa')
+                     '(?P<prefix>PREP1_interpolated)\.fa$')
                  ]
     # accepted_kinds
     filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
