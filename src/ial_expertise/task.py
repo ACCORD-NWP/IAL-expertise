@@ -43,6 +43,9 @@ task_status = {'X':{'symbol':'X',
                        'short':'(Outputs...)',
                        'text':'Waiting for task : Output step started, unknown status since ' +
                               '(possible reasons: resource absence, ...)'},
+               'F':{'symbol':'F',
+                    'short':'Failed',
+                    'text':'Failed: Task ended but the inner auto-test (i.e. the test auto-evaluates its results) has failed.'},
                }
 
 
@@ -143,6 +146,8 @@ class ExpertBoard(object):
             logger.info("Start parsing with expert: {}...".format(type(e)))
             self.task_summary[e.kind] = e.parse()
             logger.info("... complete.")
+            if self.task_summary[e.kind].get('Auto-test', None) == 'Failed':
+                self.task_summary['Status'] = task_status['F']
         self.task_summary.dump('task_summary.json')
 
     def compare(self, consistency=None, continuity=None):
