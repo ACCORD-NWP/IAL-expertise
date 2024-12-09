@@ -3,9 +3,6 @@
 """
 Setup Experts.
 """
-from __future__ import print_function, absolute_import, division, unicode_literals
-import six
-
 import re
 
 from .util import EXTENDED_FLOAT_RE
@@ -39,14 +36,14 @@ class SetupExpert(TextOutputExpert):
 
     END_SIGNATURE = "------ END OF SETUPS at level 0 ---------------------------------------"
 
-    KEY = '\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
+    KEY = r'\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
     VAL = '(' + EXTENDED_FLOAT_RE + '|T|F|\*+'+ ')'
-    VALS = VAL + '((\s|,)*' + VAL + ')*'
-    REC_KV = re.compile('.*(\s|,|^)(?P<key>' + KEY + ')\s*=\s*(?P<val>' + VALS + ')(\s|,|$).*')
-    REC_K_EQ_ENDLINE = re.compile('.*(\s|,|^)(?P<key>' + KEY + ')\s*=\s*$')
-    REC_TABLE_ALONE = re.compile('^\s*' + VALS + '$')
+    VALS = VAL + r'((\s|,)*' + VAL + ')*'
+    REC_KV = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*(?P<val>' + VALS + r')(\s|,|$).*')
+    REC_K_EQ_ENDLINE = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*$')
+    REC_TABLE_ALONE = re.compile(r'^\s*' + VALS + '$')
     REC_VALS = re.compile(VALS)
-    REC_VALS_SPACES = re.compile(VAL + '(\s*' + VAL + ')*')
+    REC_VALS_SPACES = re.compile(VAL + r'(\s*' + VAL + ')*')
     REC_VALS_COMMAS = re.compile(VAL + '(,*' + VAL + ')*')
 
     def _parse(self):
@@ -77,7 +74,7 @@ class SetupExpert(TextOutputExpert):
                     if rightmost:  # try to find a continued table only if rightmost key/value on this line
                         table = self._table_on_next_lines(l)
                         if table:
-                            if isinstance(val, six.string_types):
+                            if isinstance(val, str):
                                 val = [val]
                             val.extend(table)
                         rightmost = False  # we just processed the rightmost

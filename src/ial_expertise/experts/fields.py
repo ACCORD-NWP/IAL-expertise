@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Fields parsers."""
-
-from __future__ import print_function, absolute_import, division, unicode_literals
-import six
-
 import io
 import numpy
 import os
@@ -263,13 +259,13 @@ class FieldsInFileExpert(OutputExpert):
     _re_files = [re.compile(p)
                  for p in (
                      # historic of post-processed files
-                     '(?P<prefix>(ICMSH)|(PF)|(GRIBPF))(?P<cnmexp>\w{4})(?P<area>.+)?\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?(?P<sfx>\.sfx)?$',
+                     r'(?P<prefix>(ICMSH)|(PF)|(GRIBPF))(?P<cnmexp>\w{4})(?P<area>.+)?\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?(?P<sfx>\.sfx)?$',
                      # coupling files
-                     '(?P<prefix>CPLOUT)\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
+                     r'(?P<prefix>CPLOUT)\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
                      # pgd files
-                     '(?P<prefix>PGD)\.fa$',
+                     r'(?P<prefix>PGD)\.fa$',
                      # prep files
-                     '(?P<prefix>PREP1_interpolated)\.fa$')
+                     r'(?P<prefix>PREP1_interpolated)\.fa$')
                  ]
     # accepted_kinds
     filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
@@ -483,7 +479,7 @@ def compare_2_files(test, ref,
     uncompared_fields = []
     # common fields: comparison
     intersection = [f for f in test_list if f in ref_list]
-    if len(intersection) > 0 and isinstance(intersection[0], six.string_types):
+    if len(intersection) > 0 and isinstance(intersection[0], str):
         intersection = sorted(intersection)
     fields_status = {}
     max_normalized_diff = 0.
@@ -596,7 +592,7 @@ def compare_2_fields(test_resource, ref_resource, fid,
 def ignore_field(fid):
     """Test if field is to be ignored in comparison."""
     ignore = False
-    if isinstance(fid, six.string_types):
+    if isinstance(fid, str):
         if fid.startswith('SFX._FBUF_'):
             ignore = True
     return ignore

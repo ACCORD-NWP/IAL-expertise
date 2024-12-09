@@ -1,0 +1,38 @@
+[project]
+name = "ial_expertise"
+dynamic = ["version"]
+description = "IAL expertise: Experts tools to analyse the outputs of IAL configurations."
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["IAL", "DAVAI"]
+license = {text = "CECILL-C"}
+authors = [
+    { name = "Alexandre Mary"  , email = "alexandre.mary@meteo.fr"}
+    ]
+dependencies=[
+    "footprints",
+    "numpy",
+    "arpifs_listings",
+    "taylorism",
+    ]
+
+[project.urls]
+source = "https://github.com/ACCORD-NWP/IAL-expertise.git"
+tracker = "https://github.com/ACCORD-NWP/IAL-expertise/issues"
+
+[project.scripts]
+ial-fields_expertise_get = "ial_expertise.cli.fields_expertise_get:main"
+ial-fields_expertise_plot = "ial_expertise.cli.fields_expertise_plot:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+ial_expertise = "src/ial_expertise"
+
+[tool.setuptools.package-data]
+ial_expertise = ["drhook/*.pl"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ial_expertise.__version__"}

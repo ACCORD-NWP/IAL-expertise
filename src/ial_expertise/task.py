@@ -3,10 +3,6 @@
 """
 Task: tools to analyse the outputs of a task and state about its validation.
 """
-
-from __future__ import print_function, absolute_import, division, unicode_literals
-import six
-
 import json
 import sys
 
@@ -63,7 +59,7 @@ class TaskSummary(dict):
 
     def dump(self, out=sys.stdout):
         """Dump the TaskSummary into a JSON file."""
-        if isinstance(out, six.string_types):
+        if isinstance(out, str):
             close = True
             out = open(out, 'w')
         else:
@@ -73,7 +69,7 @@ class TaskSummary(dict):
             out.close()
 
     def _load(self, filein):
-        if isinstance(filein, six.string_types):
+        if isinstance(filein, str):
             close = True
             filein = open(filein, 'r')
         else:

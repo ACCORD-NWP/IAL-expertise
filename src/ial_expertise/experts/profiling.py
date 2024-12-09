@@ -10,6 +10,7 @@ import subprocess
 import numpy as np
 import json
 import io
+import importlib.resources
 
 from ial_expertise import package_rootdir
 from . import OutputExpert, ExpertError
@@ -104,7 +105,7 @@ class DrHook(OutputExpert):
             raise ExpertError('No drhook files found.')
 
     def _merge_walltime(self, stat):
-        script = os.path.join(package_rootdir, 'bin', 'drhook_merge_walltime_{}'.format(stat))
+        script = importlib.resources.path("ial_expertise.drhook", 'drhook_merge_walltime_{}.pl'.format(stat))
         out = subprocess.check_output([script,] + self.drhookfiles)
         self.merged_drhook = out.decode('utf-8').split('\n')[:-1]  # to remove trailing empty line
 

@@ -1,5 +1,7 @@
 *.py[co~]
 *__pycache__
+ial_expertise.egg-info/
+build/
 
 # pycharm
 .idea
