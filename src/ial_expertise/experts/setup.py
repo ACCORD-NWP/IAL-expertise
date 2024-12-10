@@ -37,7 +37,7 @@ class SetupExpert(TextOutputExpert):
     END_SIGNATURE = "------ END OF SETUPS at level 0 ---------------------------------------"
 
     KEY = r'\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
-    VAL = '(' + EXTENDED_FLOAT_RE + '|T|F|\*+'+ ')'
+    VAL = '(' + EXTENDED_FLOAT_RE + r'|T|F|\*+'+ ')'
     VALS = VAL + r'((\s|,)*' + VAL + ')*'
     REC_KV = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*(?P<val>' + VALS + r')(\s|,|$).*')
     REC_K_EQ_ENDLINE = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*$')

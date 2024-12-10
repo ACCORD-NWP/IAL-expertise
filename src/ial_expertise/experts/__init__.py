@@ -6,8 +6,6 @@ A collection of Experts.
 Experts are meant to parse the result of a task, and eventually compare it
 to a reference.
 """
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 import io
 import json
 

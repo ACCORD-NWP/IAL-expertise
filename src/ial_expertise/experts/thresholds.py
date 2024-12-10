@@ -3,7 +3,6 @@
 """
 Thresholds for validation of various comparisons.
 """
-from __future__ import print_function, absolute_import, division, unicode_literals
 
 #: Threshold in Jo relative difference for validation
 JO = 1e-8

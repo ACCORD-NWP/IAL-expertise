@@ -4,21 +4,13 @@
 # This software is governed by the CeCILL-C license under French law.
 # http://www.cecill.info
 
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 from unittest import main, TestCase
 import io
 import time
 
-import epygram
-from epygram import epylog
-
 from ial_expertise.experts import oops, util
 
 timing = False
-
-epygram.init_env()
-epylog.setLevel('WARNING')
 
 
 class Test_oops(TestCase):

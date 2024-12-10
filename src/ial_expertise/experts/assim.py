@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Assimilation tasks parsers."""
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 import re
 import os
 
@@ -143,11 +141,11 @@ class BatorObservationsCount(TextOutputExpert):
     )
 
     _start_pattern = "****** Donnees archivees ******"
-    _end_pattern = re.compile("Nb total d'observations :\s*(?P<ntotobs>\d+)")
-    _obstype_pattern = re.compile("observations :\s+(?P<obstype>\w+)\s+(?P<N_obstype>\d+)")
-    _subobstype_pattern = re.compile("\s*(?P<subobstype>.+)\s+(?P<N_subobstype>\d+)")
-    _nbpool_pattern = re.compile("\*\*\* INFO - BATOR : BATOR_NBPOOL is (?P<nbpool>\d+)")
-    _loc_listing_name = re.compile('listing\.(?P<base>\w+)')
+    _end_pattern = re.compile(r"Nb total d'observations :\s*(?P<ntotobs>\d+)")
+    _obstype_pattern = re.compile(r"observations :\s+(?P<obstype>\w+)\s+(?P<N_obstype>\d+)")
+    _subobstype_pattern = re.compile(r"\s*(?P<subobstype>.+)\s+(?P<N_subobstype>\d+)")
+    _nbpool_pattern = re.compile(r"\*\*\* INFO - BATOR : BATOR_NBPOOL is (?P<nbpool>\d+)")
+    _loc_listing_name = re.compile(r'listing\.(?P<base>\w+)')
 
     def _find_listings(self):
         loc_files = os.listdir(os.getcwd())
@@ -282,8 +280,8 @@ class CanariStats(TextOutputExpert):
 
     _start = 'Statistiques supplementaires'
     _end = "Fin de l'impression des statistiques supplementaires de CANCER"
-    _re_type = re.compile("Type d'observations numero\s+(?P<obstypenum>\d+)")
-    _re_param = re.compile("(?P<param>.*)OBS-MOD =\s*(?P<param_value>-?\d+\.\d{3}) SIGMA =\s*(?P<sigma>\d+\.\d{3}) \((?P<param_num>\d+)\)")
+    _re_type = re.compile(r"Type d'observations numero\s+(?P<obstypenum>\d+)")
+    _re_param = re.compile(r"(?P<param>.*)OBS-MOD =\s*(?P<param_value>-?\d+\.\d{3}) SIGMA =\s*(?P<sigma>\d+\.\d{3}) \((?P<param_num>\d+)\)")
 
     @classmethod
     def _parse_text(cls, text):

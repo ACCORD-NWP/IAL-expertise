@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Profiling parsers."""
-
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 import re
 import os
 import subprocess
@@ -12,7 +9,6 @@ import json
 import io
 import importlib.resources
 
-from ial_expertise import package_rootdir
 from . import OutputExpert, ExpertError
 from .util import ppp, EXTENDED_FLOAT_RE
 
@@ -35,11 +31,11 @@ class DrHook(OutputExpert):
 
     side_expert = True
 
-    _re_file1 = re.compile('drhook\.prof\.\d+')
-    _re_file2 = re.compile('drhookprof\..+\.n\d+')
-    _re_walltime = re.compile('Wall-times over all MPI-tasks \(secs\) : Min=(?P<min>\d+\.\d+), Max=(?P<max>\d+\.\d+), Avg=(?P<avg>\d+\.\d+), StDev=(?P<stdev>\d+\.\d+)')
-    _re_mpi_tasks = re.compile('Number of MPI-tasks : (?P<mpi>\d+)')
-    _re_openmp_threads = re.compile('Number of OpenMP-threads : (?P<openmp>\d+)')
+    _re_file1 = re.compile(r'drhook\.prof\.\d+')
+    _re_file2 = re.compile(r'drhookprof\..+\.n\d+')
+    _re_walltime = re.compile(r'Wall-times over all MPI-tasks \(secs\) : Min=(?P<min>\d+\.\d+), Max=(?P<max>\d+\.\d+), Avg=(?P<avg>\d+\.\d+), StDev=(?P<stdev>\d+\.\d+)')
+    _re_mpi_tasks = re.compile(r'Number of MPI-tasks : (?P<mpi>\d+)')
+    _re_openmp_threads = re.compile(r'Number of OpenMP-threads : (?P<openmp>\d+)')
     _header = "  Avg-%   Avg.time   Min.time   Max.time   St.dev  Imbal-%   # of calls : Name of the routine"
 
     def _parse(self):
@@ -209,9 +205,9 @@ class RSS(OutputExpert):
 
     side_expert = True
 
-    _re_file1 = re.compile('stdeo\.(?P<n>\d+)')
-    _re_file2 = re.compile('listing\..+\.stdeo\.(?P<n>\d+)')
-    _re_rss = re.compile('.*RSS=(\d+)k$')
+    _re_file1 = re.compile(r'stdeo\.(?P<n>\d+)')
+    _re_file2 = re.compile(r'listing\..+\.stdeo\.(?P<n>\d+)')
+    _re_rss = re.compile(r'.*RSS=(\d+)k$')
 
     def _parse(self):
         """Actual parsing."""

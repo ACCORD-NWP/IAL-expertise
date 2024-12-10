@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """OOPS parsers."""
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 import re
 import numpy
 
@@ -69,7 +67,7 @@ class OOPSJoExpert(OOPSTestExpert):
     )
 
     # Jo & expected Jo
-    _re_jo = '.*\[CDATA\[Jo = (?P<jo>' + EXTENDED_FLOAT_RE + ')\]\].*'
+    _re_jo = r'.*\[CDATA\[Jo = (?P<jo>' + EXTENDED_FLOAT_RE + ')\]\].*'
     _re_test = re.compile(_re_jo)  # + _re_exp_jo)
 
     def summary(self):
@@ -116,10 +114,10 @@ class OOPSJoADExpert(OOPSTestExpert):
     )
 
     # Adjoint test  # CLEANME: le (D|d) est une scorie
-    _re_test = re.compile('.*\[CDATA\[' +
-                          'dx1\.dx2 = (?P<dx1dx2>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          'dy1\.dy2 = (?P<dy1dy2>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          '(D|d)igits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
+    _re_test = re.compile(r'.*\[CDATA\[' +
+                          r'dx1\.dx2 = (?P<dx1dx2>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'dy1\.dy2 = (?P<dy1dy2>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'(D|d)igits = (?P<digits>' + EXTENDED_FLOAT_RE + r')\s*\]\].*')
 
     def summary(self):
         return {'dx1.dx2':float(self.parsedOut['dx1dx2']),
@@ -163,17 +161,17 @@ class OOPSJoTLExpert(OOPSTestExpert):
         )
     )
 
-    _re_signature = 'WRITE_OBSVEC: CDNAME == obs_diags_1@update_(?P<nupdate>\d+) - write to ODB'
-    _re_stats46 = re.compile('WRITE_OBSVEC: MIN,MAX,AVG=\s*' +
-                             '(?P<min>' + EXTENDED_FLOAT_RE + ')\s+' +
-                             '(?P<max>' + EXTENDED_FLOAT_RE + ')\s+' +
-                             '(?P<avg>' + EXTENDED_FLOAT_RE + ')\s*')
-    _re_stats47 = re.compile('WRITE_OBSVEC: VALUES,NOT RMDI,MIN,MAX,AVG=\s*' +
-                             '(?P<values>\d+)\s+' +
-                             '(?P<not_rmdi>\d+)\s+' +
-                             '(?P<min>' + EXTENDED_FLOAT_RE + ')\s+' +
-                             '(?P<max>' + EXTENDED_FLOAT_RE + ')\s+' +
-                             '(?P<avg>' + EXTENDED_FLOAT_RE + ')\s*')
+    _re_signature = r'WRITE_OBSVEC: CDNAME == obs_diags_1@update_(?P<nupdate>\d+) - write to ODB'
+    _re_stats46 = re.compile(r'WRITE_OBSVEC: MIN,MAX,AVG=\s*' +
+                             r'(?P<min>' + EXTENDED_FLOAT_RE + r')\s+' +
+                             r'(?P<max>' + EXTENDED_FLOAT_RE + r')\s+' +
+                             r'(?P<avg>' + EXTENDED_FLOAT_RE + r')\s*')
+    _re_stats47 = re.compile(r'WRITE_OBSVEC: VALUES,NOT RMDI,MIN,MAX,AVG=\s*' +
+                             r'(?P<values>\d+)\s+' +
+                             r'(?P<not_rmdi>\d+)\s+' +
+                             r'(?P<min>' + EXTENDED_FLOAT_RE + r')\s+' +
+                             r'(?P<max>' + EXTENDED_FLOAT_RE + r')\s+' +
+                             r'(?P<avg>' + EXTENDED_FLOAT_RE + r')\s*')
     
     def _parse(self):
         pass
@@ -282,7 +280,7 @@ class OOPSStateDiffExpert(OOPSTestExpert):
     )
 
     # Diff between 2 states
-    _re_statediff = '.*\[CDATA\[.*\|\|((Mx-x)|(x0-x2))\|\| = (?P<statediff>(\+|\-)*\d+(\.\d+)*).*'
+    _re_statediff = r'.*\[CDATA\[.*\|\|((Mx-x)|(x0-x2))\|\| = (?P<statediff>(\+|\-)*\d+(\.\d+)*).*'
     #_re_exp_statediff = '<Message file=".+" line="\d+"><!\[CDATA\[Expected result = (?P<exp_statediff>(\+|\-)*\d+\.?\d+) Digits: (?P<digits>(\+|\-)*\d+(\.\d+)*)\]\]></Message>'
     _re_test = re.compile(_re_statediff)  # + _re_exp_statediff)
 
@@ -327,7 +325,7 @@ class OOPSVariancesExpert(OOPSTestExpert):
     )
 
     # Jo & expected Jo
-    _re_var = '.*\[CDATA\[variances = (?P<var>\d+\.\d+)\]\].*'
+    _re_var = r'.*\[CDATA\[variances = (?P<var>\d+\.\d+)\]\].*'
     _re_test = re.compile(_re_var)
 
     def summary(self):
@@ -371,10 +369,10 @@ class OOPSInterpolExpert(OOPSTestExpert):
         )
     )
 
-    _re_test = re.compile('.*\[CDATA\[ADJOINT TEST \(DIRECT\):\s*' +
-                          'x\.Ft\(y\)\s*=\s*(?P<xFty>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          'y\.F\(x\)\s*=\s*(?P<yFx>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          '(D|d)igits\s*=\s*(?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
+    _re_test = re.compile(r'.*\[CDATA\[ADJOINT TEST \(DIRECT\):\s*' +
+                          r'x\.Ft\(y\)\s*=\s*(?P<xFty>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'y\.F\(x\)\s*=\s*(?P<yFx>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'(D|d)igits\s*=\s*(?P<digits>' + EXTENDED_FLOAT_RE + r')\s*\]\].*')
 
     def summary(self):
         return {'x.Ft(y)':float(self.parsedOut['xFty']),
@@ -411,10 +409,10 @@ class OOPSmodelADExpert(OOPSTestExpert):
         )
     )
 
-    _re_test = re.compile('.*\[CDATA\[' +
-                          '<dx1,Mtdx2> = (?P<dx1Mtdx2>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          '<Mdx1,dx2> = (?P<Mdx1dx2>' + EXTENDED_FLOAT_RE + ')\s+' +
-                          'digits = (?P<digits>' + EXTENDED_FLOAT_RE + ')\s*\]\].*')
+    _re_test = re.compile(r'.*\[CDATA\[' +
+                          r'<dx1,Mtdx2> = (?P<dx1Mtdx2>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'<Mdx1,dx2> = (?P<Mdx1dx2>' + EXTENDED_FLOAT_RE + r')\s+' +
+                          r'digits = (?P<digits>' + EXTENDED_FLOAT_RE + r')\s*\]\].*')
 
     def summary(self):
         return {'dx1,Mtdx2':float(self.parsedOut['dx1Mtdx2']),
