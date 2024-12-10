@@ -123,7 +123,7 @@ class OOPSJoADExpert(OOPSTestExpert):
         return {'dx1.dx2':float(self.parsedOut['dx1dx2']),
                 'dy1.dy2':float(self.parsedOut['dy1dy2']),
                 'Digits':min(float(self.parsedOut['digits']), 16),
-                'Auto-test':'Failed' if min(float(self.parsedOut['digits']), 16) < validation_threshold else 'Passed'}
+                'Auto-test':'Failed' if min(float(self.parsedOut['digits']), 16) < self.digits_validation_threshold else 'Passed'}
 
     @classmethod
     def compare_2summaries(cls, test, ref, validation_threshold=JOAD_DIGITS):
@@ -418,7 +418,7 @@ class OOPSmodelADExpert(OOPSTestExpert):
         return {'dx1,Mtdx2':float(self.parsedOut['dx1Mtdx2']),
                 'Mdx1,dx2':float(self.parsedOut['Mdx1dx2']),
                 'Digits':min(float(self.parsedOut['digits']), 16),
-                'Auto-test':'Failed' if min(float(self.parsedOut['digits']), 16) < validation_threshold else 'Passed'}
+                'Auto-test':'Failed' if min(float(self.parsedOut['digits']), 16) < self.digits_validation_threshold else 'Passed'}
 
     @classmethod
     def compare_2summaries(cls, test, ref, validation_threshold=JOAD_DIGITS):
