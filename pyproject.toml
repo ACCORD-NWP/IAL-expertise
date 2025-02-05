@@ -16,6 +16,11 @@ dependencies=[
     "taylorism",
     ]
 
+[project.optional-dependencies]
+all = [
+    "epygram",
+        ]
+
 [project.urls]
 source = "https://github.com/ACCORD-NWP/IAL-expertise.git"
 tracker = "https://github.com/ACCORD-NWP/IAL-expertise/issues"
