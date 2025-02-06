@@ -31,6 +31,9 @@ task_status = {'X':{'symbol':'X',
                        'short':'(Inputs...)',
                        'text':'Waiting for task : Input step started, unknown status since ' +
                               '(possible reasons: fetch error, dependancy...)'},
+               'ID':{'symbol':'(ID)',
+                     'short':'(Inputs:done.)',
+                     'text':'Waiting for task : Input step done, now waiting in line before compute'},
                'C...':{'symbol':'(C...)',
                        'short':'(Compute...)',
                        'text':'Waiting for task : Compute step started, unknown status since ' +
