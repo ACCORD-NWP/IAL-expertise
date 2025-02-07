@@ -4,6 +4,6 @@
 IAL expertise package: expertise outputs of IAL tasks.
 """
 
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 
 from . import experts, task

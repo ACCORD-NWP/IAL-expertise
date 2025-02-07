@@ -12,14 +12,18 @@ authors = [
 dependencies=[
     "footprints",
     "numpy",
-    "arpifs_listings",
+    "arpifs_listings",  # [graphics]
     "taylorism",
     ]
 
 [project.optional-dependencies]
 all = [
     "epygram",
-        ]
+    "matplotlib",
+    ]
+graphics = [
+    "matplotlib",
+    ]
 
 [project.urls]
 source = "https://github.com/ACCORD-NWP/IAL-expertise.git"
