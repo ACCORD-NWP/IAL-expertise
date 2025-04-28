@@ -265,11 +265,14 @@ class FieldsInFileExpert(OutputExpert):
                      # pgd files
                      r'(?P<prefix>PGD)\.fa$',
                      # prep files
-                     r'(?P<prefix>PREP1_interpolated)\.fa$')
+                     r'(?P<prefix>PREP1_interpolated)\.fa$',
+                     # clim files
+                     r'(?P<prefix>Const\.Clim)(\..*)?$',
+                     )
                  ]
     # accepted_kinds
     filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
-                 'boundary', 'analysis')
+                 'boundary', 'analysis', 'clim_model')
     # reference prefixes
     ref_prefix = 'ref.'
     cnty_prefix = 'continuity.'
