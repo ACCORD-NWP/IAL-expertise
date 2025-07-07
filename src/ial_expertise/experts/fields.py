@@ -158,7 +158,9 @@ class NormsChecker(OutputExpert):
                    'mainMetrics':'Maximum different digits'}
         if not summary['Validated']:
             summary['_Norms Compared (all)'] = comp.read().split('\n')
-        if plot_spectral:
+        summary['Spectral norms evolution'] = arpifs_listings.norms.compare_normsets(testset, refset, mode='sp_dict',
+                                                                                     which='all')
+        if plot_spectral:  # deprecated
             svg = 'spnorms.svg'
             arpifs_listings.norms.compare_normsets(testset, refset, mode='plot',
                                                    which='all',
