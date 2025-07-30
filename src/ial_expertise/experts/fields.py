@@ -59,12 +59,6 @@ class NormsChecker(OutputExpert):
                 type = bool,
                 default = False,
             ),
-            plot_spectral = dict(
-                info = "Plot evolution of spectral norms difference (number of # digits) to SVG.",
-                optional = True,
-                type = bool,
-                default = False,
-            ),
         )
     )
 
@@ -101,14 +95,11 @@ class NormsChecker(OutputExpert):
 
     @classmethod
     def compare_2summaries(cls, test, ref,
-                           plot_spectral=False,
                            mode='last_spectral',
                            validation_threshold=NORMSDIGITS_BITREPRO):
         """
         Compare 2 sets of norms in summary.
 
-        :param plot_spectral: plot evolution of spectral norms difference
-            (number of # digits)
         :param validation_threshold: validation will be considered OK if the
             maximal number of different digits is lower or equal to threshold
         """
@@ -125,29 +116,18 @@ class NormsChecker(OutputExpert):
                      for n in refsteps]
         refset = arpifs_listings.norms.NormsSet(from_list=refnorms)
         return cls._compare_2normsets(testset, refset,
-                                      plot_spectral=plot_spectral,
                                       validation_threshold=validation_threshold)
 
     @classmethod
     def _compare_2normsets(cls, testset, refset,
                            hide_equal_norms=False,
-                           plot_spectral=False,
                            validation_threshold=NORMSDIGITS_BITREPRO):
         """
         Compare 2 sets of norms.
 
-        :param plot_spectral: plot evolution of spectral norms difference
-            (number of # digits)
         :param validation_threshold: validation will be considered OK if the
             maximal number of different digits is lower or equal to threshold
         """
-        comp = io.StringIO()
-        arpifs_listings.norms.compare_normsets(testset, refset, mode='text',
-                                               which='all',
-                                               out=comp,
-                                               onlymaxdiff=False,
-                                               hide_equal_norms=hide_equal_norms)
-        comp.seek(0)
         worst_digit = arpifs_listings.norms.compare_normsets(testset, refset, mode='get_worst',
                                                              which='all',
                                                              onlymaxdiff=True)
@@ -157,17 +137,7 @@ class NormsChecker(OutputExpert):
                    'Bit-reproducible':worst_digit <= NORMSDIGITS_BITREPRO,
                    'mainMetrics':'Maximum different digits'}
         if not summary['Validated']:
-            summary['_Norms Compared (all)'] = comp.read().split('\n')
-        summary['Spectral norms evolution'] = arpifs_listings.norms.compare_normsets(testset, refset, mode='sp_dict',
-                                                                                     which='all')
-        if plot_spectral:  # deprecated
-            svg = 'spnorms.svg'
-            arpifs_listings.norms.compare_normsets(testset, refset, mode='plot',
-                                                   which='all',
-                                                   plot_out=svg)
-            with io.open(svg, 'r') as s:
-                svg = s.readlines()
-            summary['Graph: Spectral norms evolution (SVG)'] = ''.join([l.strip() for l in svg])  # condensed
+            summary['Table of diverging digits'] = arpifs_listings.norms.compare_normsets_as_table(testset, refset)
         return summary
 
     def _compare(self, references):
@@ -191,7 +161,6 @@ class NormsChecker(OutputExpert):
         return self._compare_2normsets(self.listing.normset,
                                        ref_listing_in.normset,
                                        hide_equal_norms=self.hide_equal_norms,
-                                       plot_spectral=self.plot_spectral,
                                        validation_threshold=validation_threshold)
 
 

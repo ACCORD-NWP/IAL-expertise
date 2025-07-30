@@ -67,7 +67,7 @@ class TaskSummary(dict):
             out = open(out, 'w')
         else:
             close = False
-        json.dump(self, out, indent=4, sort_keys=True)
+        json.dump(self, out, indent=2, sort_keys=True)
         if close:
             out.close()
 

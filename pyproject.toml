@@ -12,7 +12,7 @@ authors = [
 dependencies=[
     "footprints",
     "numpy",
-    "arpifs_listings>=1.2.1",
+    "arpifs_listings>=1.2.2",
     "taylorism",
     ]
 
