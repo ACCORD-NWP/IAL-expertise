@@ -137,7 +137,8 @@ class NormsChecker(OutputExpert):
                    'Bit-reproducible':worst_digit <= NORMSDIGITS_BITREPRO,
                    'mainMetrics':'Maximum different digits'}
         if not summary['Validated']:
-            summary['Table of diverging digits'] = arpifs_listings.norms.compare_normsets_as_table(testset, refset)
+            summary['Table of diverging digits'] = arpifs_listings.norms.compare_normsets_as_table(testset, refset,
+               hide_equal_norms=hide_equal_norms)
         return summary
 
     def _compare(self, references):
