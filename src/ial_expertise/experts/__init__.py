@@ -142,4 +142,4 @@ class TextOutputExpert(OutputExpert):
 
 
 from . import thresholds
-from . import oops, profiling, fields, assim, setup, build
+from . import oops, profiling, fields, assim, setup, build, norms

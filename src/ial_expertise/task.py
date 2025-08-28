@@ -142,7 +142,7 @@ class ExpertBoard(object):
         collecting information into self.task_summary.
         """
         for e in self.experts:
-            logger.info("Start parsing with expert: {}...".format(type(e)))
+            logger.info(f"Start parsing with expert: {e.kind}...")
             self.task_summary[e.kind] = e.parse()
             logger.info("... complete.")
             if self.task_summary[e.kind].get('Auto-test', None) == 'Failed':
@@ -166,7 +166,7 @@ class ExpertBoard(object):
             else:
                 self.consistency['referenceTask'] = ref_task[0]
         for e in self.experts:
-            logger.info("Start comparison with expert: {}...".format(type(e)))
+            logger.info(f"Start comparison with expert: {e.kind}...")
             if consistency:
                 logger.info('(consistency)')
                 self.consistency[e.kind] = e.compare([r['rh'] for r in consistency])

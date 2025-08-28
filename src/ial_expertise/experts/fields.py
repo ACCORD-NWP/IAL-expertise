@@ -7,162 +7,13 @@ import os
 import re
 
 from footprints import FPList, proxy as fpx
-import arpifs_listings
 from bronx.fancies import loggers
 from taylorism import Worker, batch_main
 
 from . import OutputExpert, ExpertError
-from .thresholds import (NORMSDIGITS_BITREPRO,
-                         NORMALIZED_FIELDS_DIFF,
-                         EPSILON)
+from .thresholds import NORMALIZED_FIELDS_DIFF, EPSILON
 
 logger = loggers.getLogger(__name__)
-
-
-class NormsChecker(OutputExpert):
-
-    _footprint = dict(
-        info = 'Read and compare the spectral/gridpoint norms of fields in listing.',
-        attr = dict(
-            kind = dict(
-                values = ['norms',],
-            ),
-            output = dict(
-                info = "Output listing file name to process.",
-                optional = True,
-                default = 'NODE.001_01',
-            ),
-            digits4validation = dict(
-                info = "Maximum number of different digits in norms for validation.",
-                type = int,
-                optional = True,
-                default = NORMSDIGITS_BITREPRO
-            ),
-            normstype = dict(
-                info = "Select type of norms to be written in task summary.",
-                values = ['spnorms', 'gpnorms', 'both'],
-                optional = True,
-                default = 'both',
-            ),
-            mode = dict(
-                info = "Tunes what is to be written in task summary, among: " +
-                       "'all': all norms | " +
-                       "'last': only last step norms | " +
-                       "'last_spectral': only the last step that contains spectral norms.",
-                values = ['all', 'last', 'last_spectral'],
-                optional = True,
-                default = 'last_spectral',
-            ),
-            hide_equal_norms = dict(
-                info = "Hide fields which norms are equal.",
-                optional = True,
-                type = bool,
-                default = False,
-            ),
-        )
-    )
-
-    _modes = {'all':'_Norms at each step',
-              'last':'Last step norms',
-              'last_spectral':'Last step with spectral norms'}
-
-    def _parse(self):
-        """Parse file, read all norms."""
-        self.listing = arpifs_listings.listings.OutputListing(self.output, 'norms')
-        self.listing.parse_patterns(flush_after_reading=True)
-
-    def summary(self):
-        normset = [n.as_dict() for n in self.listing.normset.norms_at_each_step]
-        summary = {'Number of steps':len(normset)}
-        if self.normstype in ('spnorms', 'gpnorms'):
-            normset = [{'step':n['step'], self.normstype:n[self.normstype]}
-                       for n in normset if len(n[self.normstype]) != 0]
-            key_suffix = ' ({} only)'.format(self.normstype)
-        else:
-            key_suffix = ''
-        if self.mode == 'all':
-            summary['_Norms at each step' + key_suffix] = normset
-        elif self.mode == 'last':
-            summary['Last step norms' + key_suffix] = normset[-1]
-        elif self.mode == 'last_spectral':
-            normset = [n for n in normset if len(n.get('spnorms', {})) > 0]
-            summary['Last step with spectral norms' + key_suffix] = normset[-1]
-        for norms in normset:
-            for k in list(norms.keys()):
-                if len(norms[k]) == 0:
-                    norms.pop(k)
-        return summary
-
-    @classmethod
-    def compare_2summaries(cls, test, ref,
-                           mode='last_spectral',
-                           validation_threshold=NORMSDIGITS_BITREPRO):
-        """
-        Compare 2 sets of norms in summary.
-
-        :param validation_threshold: validation will be considered OK if the
-            maximal number of different digits is lower or equal to threshold
-        """
-        if mode in ('last', 'last_spectral'):
-            teststeps = [test[cls._modes[mode]],]
-            refsteps = [ref[cls._modes[mode]],]
-        else:
-            teststeps = test[cls._modes[mode]]
-            refsteps = ref[cls._modes[mode]]
-        testnorms = [arpifs_listings.norms.Norms(n['step'], from_dict=n)
-                     for n in teststeps]
-        testset = arpifs_listings.norms.NormsSet(from_list=testnorms)
-        refnorms = [arpifs_listings.norms.Norms(n['step'], from_dict=n)
-                     for n in refsteps]
-        refset = arpifs_listings.norms.NormsSet(from_list=refnorms)
-        return cls._compare_2normsets(testset, refset,
-                                      validation_threshold=validation_threshold)
-
-    @classmethod
-    def _compare_2normsets(cls, testset, refset,
-                           hide_equal_norms=False,
-                           validation_threshold=NORMSDIGITS_BITREPRO):
-        """
-        Compare 2 sets of norms.
-
-        :param validation_threshold: validation will be considered OK if the
-            maximal number of different digits is lower or equal to threshold
-        """
-        worst_digit = arpifs_listings.norms.compare_normsets(testset, refset, mode='get_worst',
-                                                             which='all',
-                                                             onlymaxdiff=True)
-        summary = {'Maximum different digits':worst_digit,
-                   'Validated means':'Maximum number of different digits in norms is lower or equal to {}'.format(validation_threshold),
-                   'Validated':worst_digit <= validation_threshold,
-                   'Bit-reproducible':worst_digit <= NORMSDIGITS_BITREPRO,
-                   'mainMetrics':'Maximum different digits'}
-        if not summary['Validated']:
-            summary['Table of diverging digits'] = arpifs_listings.norms.compare_normsets_as_table(testset, refset,
-               hide_equal_norms=hide_equal_norms)
-        return summary
-
-    def _compare(self, references):
-        """Compare to a reference."""
-        listings = [r for r in references if r.resource.kind == 'plisting']
-        if len(listings) > 0:  # in priority, because summary may not contain all norms
-            return self._compare_listings(references,
-                                          validation_threshold=self.digits4validation)
-        else:
-            return self._compare_summaries(references,
-                                           mode=self.mode,
-                                           validation_threshold=self.digits4validation)
-
-    def _compare_listings(self, references,
-                          validation_threshold=NORMSDIGITS_BITREPRO):
-        """Get listing among references resources, parse it and compare."""
-        ref_listing = self.filter_one_resource(references, rkind='plisting')
-        ref_listing_in = arpifs_listings.listings.OutputListing(
-            ref_listing.container.localpath(), 'norms')
-        ref_listing_in.parse_patterns(flush_after_reading=True)
-        return self._compare_2normsets(self.listing.normset,
-                                       ref_listing_in.normset,
-                                       hide_equal_norms=self.hide_equal_norms,
-                                       validation_threshold=validation_threshold)
 
 
 class FieldsInFileExpert(OutputExpert):
@@ -170,8 +21,18 @@ class FieldsInFileExpert(OutputExpert):
     _footprint = dict(
         info = 'Read and compare the fields present in files.',
         attr = dict(
+            expert = dict(
+                values = ['fields_in_file',],  # just a way of picking this very expert
+            ),
             kind = dict(
-                values = ['fields_in_file',],
+                info = "Vortex resources kinds addressed.",
+                type = str,
+            ),
+            filename_re_pattern = dict(
+                info = "Filename regular expression pattern.",
+                type = str,
+                optional = True,
+                default = None,
             ),
             filenames = dict(
                 info = "Filenames to process. If absent, will be determined " +
@@ -228,30 +89,35 @@ class FieldsInFileExpert(OutputExpert):
         )
     )
 
-    _re_files = [re.compile(p)
-                 for p in (
-                     # historic of post-processed files
-                     r'(?P<prefix>(ICMSH)|(PF)|(GRIBPF))(?P<cnmexp>\w{4})(?P<area>.+)?\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?(?P<sfx>\.sfx)?$',
-                     # coupling files
-                     r'(?P<prefix>CPLOUT)\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
-                     # pgd files
-                     r'(?P<prefix>PGD)\.fa$',
-                     # prep files
-                     r'(?P<prefix>PREP1_interpolated)\.fa$',
-                     # clim files
-                     r'(?P<prefix>Const\.Clim)(\..*)?$',
-                     )
-                 ]
-    # accepted_kinds
-    filekinds = ('historic', 'gridpoint', 'pgdfa', 'initial_condition',
-                 'boundary', 'analysis', 'clim_model')
     # reference prefixes
     ref_prefix = 'ref.'
     cnty_prefix = 'continuity.'
     csty_prefix = 'consistency.'
 
+    _filename_re_patterns = {
+        # historic
+        'historic':r'(?P<prefix>ICM(SH)|(UA))(?P<cnmexp>\w{4})(?P<area>.+)?\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?(?P<sfx>\.sfx)?$',
+        # post-processed
+        'gridpoint':r'(?P<prefix>(PF)|(GRIBPF))(?P<cnmexp>\w{4})(?P<area>.+)?\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
+        # coupling
+        'boundary':r'(?P<prefix>CPLOUT)\+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?$',
+        # pgd
+        'pgdfa':r'(?P<prefix>PGD)\.fa$',
+        # prep
+        'initial_condition':r'(?P<prefix>PREP1_interpolated)\.fa$',
+        # clim (c923)
+        'clim_model':r'(?P<prefix>Const\.Clim)(\..*)?$',
+        # DDH
+        'ddh':r'((?P<prefix>.+)\.lfa)|(DHF(?P<scope>\w{2})(?P<exp>\w{4})+(?P<term_h>\d+)(\:(?P<term_m>\d{2}))?)$',
+        }
+
     def __init__(self, *args, **kwargs):
         super(FieldsInFileExpert, self).__init__(*args, **kwargs)
+        if not self.filename_re_pattern:
+            assert self.kind in self._filename_re_patterns, \
+            f"Unknown kind={self.kind}, please change or specify 'filename_re_pattern'."
+            self._attributes['filename_re_pattern'] = self._filename_re_patterns[self.kind]
+        self._filename_re = re.compile(self.filename_re_pattern)
 
     def _find_files_to_parse(self):
         self.files = {}
@@ -269,10 +135,8 @@ class FieldsInFileExpert(OutputExpert):
             # find files in working directory
             filenames = os.listdir(os.getcwd())
             for f in filenames:
-                for reg in self._re_files:
-                    if reg.match(f):
-                        self.files[f] = {}
-                        break
+                if self.filename_re.match(f):
+                    self.files[f] = {}
 
     def _parse(self):
         """Parse file, list fields."""
@@ -301,7 +165,7 @@ class FieldsInFileExpert(OutputExpert):
 
     def _make_pairs(self, references):
         ref_handlers = [r for r in references
-                        if r.resource.kind in self.filekinds]
+                        if r.resource.kind == self.kind]
         ref_filenames = [r.container.localpath() for r in ref_handlers]
         if len(self.filenames) == 0:
             pairs = self._make_pairs_from_references(ref_filenames)
@@ -406,14 +270,14 @@ class FieldsInFileExpert(OutputExpert):
                      for c in comp.values()]))
             comp.update(overall)
         else:
-            msg = "No kind={} reference resources provided".format(str(self.filekinds))
+            msg = f"No kind={self.kind} reference resources provided"
             if self.fatal_exceptions:
                 raise ExpertError(msg)
             else:
                 logger.warning(' '.join([msg," => ignored in comparison."]))
                 comp['comparisonStatus'] = {'symbol':'0',
                                             'short':'- No ref -',
-                                            'text':'No adequate reference available (kind={})'.format(str(self.filekinds))}
+                                            'text':f'No adequate reference available (kind={self.kind})'}
         return comp
 
 
@@ -518,11 +382,23 @@ def compare_2_fields(test_resource, ref_resource, fid,
     :param normalized_validation_threshold: Threshold on normalized distance for validation.
     """
     import epygram
+    from epygram.formats.DDHLFA import DDHLFA
     status = {}
     validated = True
     tfld = test_resource.readfield(fid)
     rfld = ref_resource.readfield(fid)
     if not isinstance(tfld, epygram.fields.MiscField):
+        if isinstance(ref_resource, DDHLFA):
+            # fields in DDHLFA are gathered as FieldSet, one per DDH domain; here we gather them into one field, using
+            # temporal dimension for that matter
+            tfld0 = tfld[0]
+            for f in tfld[1:]:
+                tfld0.extend(f)
+            tfld = tfld0
+            rfld0 = rfld[0]
+            for f in rfld[1:]:
+                rfld0.extend(f)
+            rfld = rfld0
         for fld in (tfld, rfld):  # would not be sure of the meaning of errors in spectral space
             if fld.spectral:
                 fld.sp2gp()
