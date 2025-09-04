@@ -10,7 +10,7 @@ from . import TextOutputExpert
 
 
 class SetupExpert(TextOutputExpert):
-    
+
     _footprint = dict(
         info = 'Read and compare the variables printed during the Setup.',
         attr = dict(
@@ -38,13 +38,13 @@ class SetupExpert(TextOutputExpert):
 
     KEY = r'\w+(%\w+)?\s*(\((\d*|:)(,\d+|:)?\))?'
     VAL = '(' + EXTENDED_FLOAT_RE + r'|T|F|\*+'+ ')'
-    VALS = VAL + r'((\s|,)*' + VAL + ')*'
+    VALS = VAL + r'((\s|,)*' + VAL + ')*' + r'(\s|,)*'
     REC_KV = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*(?P<val>' + VALS + r')(\s|,|$).*')
     REC_K_EQ_ENDLINE = re.compile(r'.*(\s|,|^)(?P<key>' + KEY + r')\s*=\s*$')
     REC_TABLE_ALONE = re.compile(r'^\s*' + VALS + '$')
     REC_VALS = re.compile(VALS)
     REC_VALS_SPACES = re.compile(VAL + r'(\s*' + VAL + ')*')
-    REC_VALS_COMMAS = re.compile(VAL + '(,*' + VAL + ')*')
+    REC_VALS_COMMAS = re.compile(VAL + '(\s*,*\s*' + VAL + r')*\s*,*')
 
     def _parse(self):
         listing = self._read_txt_output()
@@ -88,7 +88,7 @@ class SetupExpert(TextOutputExpert):
                     key = k_eq_end_match.group('key')
                     i = line.index(key)
                     line = line[:i]
-                    # look for a table of values on the next line(s) 
+                    # look for a table of values on the next line(s)
                     table = self._table_on_next_lines(l)
                     if table:
                         variables[key] = table
@@ -106,10 +106,10 @@ class SetupExpert(TextOutputExpert):
     def _split_tables(cls, string):
         """Split a table of values in a string into a list."""
         string = string.strip()
-        if cls.REC_VALS_SPACES.match(string):
-            table = [s.strip() for s in string.split() if s != '']
-        elif cls.REC_VALS_COMMAS.match(string):
+        if cls.REC_VALS_COMMAS.match(string):
             table = [s.strip() for s in string.split(',') if s != '']
+        elif cls.REC_VALS_SPACES.match(string):
+            table = [s.strip() for s in string.split() if s != '']
         return table
 
     def _table_on_next_lines(self, l):
@@ -140,22 +140,21 @@ class SetupExpert(TextOutputExpert):
         else:
             summary = {'Deactivated at runtime':'Regular Setups pattern did not match'}
         return summary
-    
+
     def _compare(self, references):
         listings = [r for r in references if r.resource.kind == 'plisting']
         if len(listings) > 0:  # in priority, because summary may not contain all norms
             return self._compare_listings(references)
         else:
             raise NotImplementedError("Comparison need a reference output listing.")
-            
+
     def _compare_listings(self, references):
         ref_listing = self.filter_one_resource(references, rkind='plisting')
         ref_setup_expert = SetupExpert(kind=self.kind,
                                        output=ref_listing.container.localpath())
         ref_setup_expert.parse()
         return self._comp(ref_setup_expert)
-        
-    
+
     def _comp(self, other):
         if other.active:
             if self.active:

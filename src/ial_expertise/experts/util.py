@@ -4,7 +4,7 @@
 Useful functionalities for Experts.
 """
 
-FLOAT_RE = r'(\+|\-)*((\d+(\.\d*)*)|(\.\d+))((E|e)(\+|\-)\d+)*'
+FLOAT_RE = r'(\d+\*)*(\+|\-)*((\d+(\.\d*)*)|(\.\d+))((E|e)(\+|\-)\d+)*'
 NAN_RE = '(NaN)|(nan)|(NAN)'
 INFINITY_RE = r'(\+|\-)*((Infinity)|(inf)|(Inf))'
 EXTENDED_FLOAT_RE = '({})'.format('|'.join(['({})'.format(expr)
