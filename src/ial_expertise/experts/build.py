@@ -77,45 +77,47 @@ class CodingNormsExpert(OutputExpert):
 
     def summary(self):
 
-        summary={}
+        summary = {}
 
         if 'local' in self.parsedInput:
 
-            sourcefiles_improved=[]
-            sourcefiles_degraded=[]
-            sourcefiles_neutral=[]
+            sourcefiles_improved = []
+            sourcefiles_degraded = []
+            sourcefiles_neutral = []
             
             if 'main' in self.parsedInput:
                 # possible to make comparison
 
                 for sourcefile in self.parsedInput['local']:
                     # total number of violations
-                    localcount=sum([self.parsedInput['local'][sourcefile][violatedNorm] for violatedNorm in self.parsedInput['local'][sourcefile]])
+                    localcount = sum([self.parsedInput['local'][sourcefile][violatedNorm]
+                                      for violatedNorm in self.parsedInput['local'][sourcefile]])
                     if sourcefile in self.parsedInput['main']:
-                        maincount=sum([self.parsedInput['main'][sourcefile][violatedNorm] for violatedNorm in self.parsedInput['main'][sourcefile]])
+                        maincount = sum([self.parsedInput['main'][sourcefile][violatedNorm]
+                                         for violatedNorm in self.parsedInput['main'][sourcefile]])
                     else:
-                        maincount=0
+                        maincount = 0
                     # add file to appropriate list
-                    if localcount<maincount:
+                    if localcount < maincount:
                         sourcefiles_improved.append(sourcefile)
-                    elif localcount==maincount:
+                    elif localcount == maincount:
                         sourcefiles_neutral.append(sourcefile)
                     else:
                         sourcefiles_degraded.append(sourcefile)
                 
                 # add lists of files to summary
-                summary['sourcefiles improved']=sourcefiles_improved
-                summary['sourcefiles degraded']=sourcefiles_degraded
-                summary['sourcefiles neutral']=sourcefiles_neutral
+                summary['sourcefiles improved'] = sourcefiles_improved
+                summary['sourcefiles degraded'] = sourcefiles_degraded
+                summary['sourcefiles neutral'] = sourcefiles_neutral
 
                 # add background info
-                summary['_main']=self.parsedInput['main']
+                summary['_main'] = self.parsedInput['main']
 
                 # main validation metric
-                summary['Auto-test']='Failed' if len(sourcefiles_degraded)>0 else 'Passed'
+                summary['Auto-test'] = 'Failed' if len(sourcefiles_degraded) > 0 else 'Passed'
 
             # add background info
-            summary['_local']=self.parsedInput['local']
+            summary['_local'] = self.parsedInput['local']
 
         return summary
     
@@ -125,8 +127,9 @@ class CodingNormsExpert(OutputExpert):
     @classmethod
     def compare_2summaries(cls, test, ref):
         if '_local' in test and '_main' in test:
-            comparison={'Validated means':'No source files have degraded in terms of coding norms.',
-                'Validated':len(test['sourcefiles_degraded'])==0,
+            comparison = {
+                'Validated means':'No source files have degraded in terms of coding norms.',
+                'Validated':len(test['sourcefiles_degraded']) == 0,
                 'Number of files degraded':len(test['sourcefiles_degraded']),
                 'mainMetrics':'Number of files degraded',
                 'Source files improved':test['sourcefiles_improved'],
@@ -134,7 +137,8 @@ class CodingNormsExpert(OutputExpert):
                 'Source files neutral':test['sourcefiles_neutral'],
             }
         else:
-          comparison={'Validated means':'Coding norms not checked; unable to validate',
+            comparison = {
+                'Validated means':'Coding norms not checked; unable to validate',
                 'Validated':True,
                 'Number of files degraded':0,
                 'mainMetrics':'Number of files degraded',
