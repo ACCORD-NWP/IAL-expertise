@@ -108,17 +108,22 @@ class ExpertBoard(object):
 
     def process(self, consistency=None, continuity=None):
         """Process experts. Cf. :meth:`compare` for arguments."""
-        logger.info("Expertise: parsing start.")
-        self.parse()
-        logger.info("Expertise: parsing end.")
-        if consistency or continuity:  # at least one provided and not empty
-            logger.info("Expertise: comparison start.")
-            self.compare(consistency, continuity)
-            logger.info("Expertise: comparison end.")
+        if len(self.experts) > 0:
+            logger.info("Expertise: parsing start.")
+            self.parse()
+            logger.info("Expertise: parsing end.")
+            if consistency or continuity:  # at least one provided and not empty
+                logger.info("Expertise: comparison start.")
+                self.compare(consistency, continuity)
+                logger.info("Expertise: comparison end.")
+            else:
+                logger.info('Expertise: no reference resource available => no comparison processed.')
+                self._notify_no_ref_resource('consistency')
+                self._notify_no_ref_resource('continuity')
         else:
-            logger.info('Expertise: no reference resource available => no comparison processed.')
-            self._notify_no_ref_resource('consistency')
-            self._notify_no_ref_resource('continuity')
+            self.continuity['comparisonStatus'] = {'symbol':'-',
+                                                   'short':'- No expert -',
+                                                   'text':'No expert requested'}
         self.task_summary['Updated'] = date.utcnow().isoformat().split('.')[0]
         self.dump()
         logger.info("Expertise: dumped to file.")
@@ -182,11 +187,11 @@ class ExpertBoard(object):
         """State about the comparison to reference."""
         comp_summary = getattr(self, which_summary)
         if len(comp_summary) > 0:
-            status_order = ['-', '0', '?', 'OK', 'KO', '!', '+']
+            status_order = ['-', '0', '?', 'OK', 'IC', 'KO', '!', '+']
             # by default, unknown status (e.g. if no expert has a Validated key)
             comp_summary['comparisonStatus'] = {'symbol':'-',
                                                 'short':'- No expert -',
-                                                'text':'No expert available'}
+                                                'text':'No expert stated'}
             for e in self.experts:
                 if e.kind in comp_summary and comp_summary[e.kind].get('symbol') == '+':
                     # reference was crashed: empty comp_summary and keep that message
@@ -202,9 +207,14 @@ class ExpertBoard(object):
                                   'short':'OK',
                                   'text':'Success: "{}"'.format(comp_summary[e.kind]['Validated means'])}
                     elif comp_summary[e.kind]['Validated'] is False:
-                        status = {'symbol':'KO',
-                                  'short':'KO',
-                                  'text':'Fail: "{}" is False'.format(comp_summary[e.kind].get('Validated means', '(?)'))}
+                        if which_summary == 'continuity':
+                            status = {'symbol':'KO',
+                                      'short':'KO',
+                                      'text':'Fail: "{}" is False'.format(comp_summary[e.kind].get('Validated means', '(?)'))}
+                        else:  # consistency
+                            status = {'symbol':'IC',
+                                      'short':'Inconsistent',
+                                      'text':'Inconsistency between this task and its reference in the same experiment'}
                 elif e.kind in comp_summary and comp_summary[e.kind].get('Comparison') == 'Failed':
                     # else, if we found at least one comparison failure, raise it as status
                     status = {'symbol':'!',

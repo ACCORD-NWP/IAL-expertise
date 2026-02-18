@@ -10,7 +10,7 @@ from . import OutputExpert
 
 
 class GmkpackBuildExpert(OutputExpert):
-    
+
     _footprint = dict(
         info = 'Check the build of executables within gmkpack',
         attr = dict(
@@ -28,7 +28,7 @@ class GmkpackBuildExpert(OutputExpert):
     def _parse(self):
         with io.open(self.output, 'r') as f:
             self.parsedOut = json.load(f)
-        
+
     def summary(self):
 
         summary = {'All OK':all([v['OK'] for v in self.parsedOut.values()]),
@@ -38,7 +38,7 @@ class GmkpackBuildExpert(OutputExpert):
         for k, v in self.parsedOut.items():
             summary['_' + k] = v
         return summary
-    
+
     def _compare(self, references, *args, **kwargs):
         return self._compare_summaries(references, *args, **kwargs)
 
@@ -53,6 +53,7 @@ class GmkpackBuildExpert(OutputExpert):
                 'Validated':test_failed.issubset(ref_failed),
                 'Newly missing executables':len(test_failed.difference(ref_failed)),
                 'mainMetrics':'Newly missing executables'}
+
 
 class CodingNormsExpert(OutputExpert):
     """" expert to check coding norms during IALGitRef2Pack """
