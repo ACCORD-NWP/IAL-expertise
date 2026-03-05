@@ -9,13 +9,13 @@ import json
 from . import OutputExpert
 
 
-class GmkpackBuildExpert(OutputExpert):
+class BuildExpert(OutputExpert):
 
     _footprint = dict(
-        info = 'Check the build of executables within gmkpack',
+        info = 'Check the build of executables',
         attr = dict(
             kind = dict(
-                values = ['gmkpack_build',],
+                values = ['gmkpack_build', 'build_expert'],
             ),
             output = dict(
                 info = "Output listing file name to process.",
@@ -85,7 +85,7 @@ class CodingNormsExpert(OutputExpert):
             sourcefiles_improved = []
             sourcefiles_degraded = []
             sourcefiles_neutral = []
-            
+
             if 'main' in self.parsedInput:
                 # possible to make comparison
 
@@ -105,7 +105,7 @@ class CodingNormsExpert(OutputExpert):
                         sourcefiles_neutral.append(sourcefile)
                     else:
                         sourcefiles_degraded.append(sourcefile)
-                
+
                 # add lists of files to summary
                 summary['sourcefiles improved'] = sourcefiles_improved
                 summary['sourcefiles degraded'] = sourcefiles_degraded
@@ -121,7 +121,7 @@ class CodingNormsExpert(OutputExpert):
             summary['_local'] = self.parsedInput['local']
 
         return summary
-    
+
     def _compare(self, references, *args, **kwargs):
         return self._compare_summaries(references, *args, **kwargs)
 
