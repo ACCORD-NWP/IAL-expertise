@@ -135,7 +135,7 @@ class FieldsInFileExpert(OutputExpert):
             # find files in working directory
             filenames = os.listdir(os.getcwd())
             for f in filenames:
-                if self.filename_re.match(f):
+                if self._filename_re.match(f):
                     self.files[f] = {}
 
     def _parse(self):
