@@ -8,6 +8,8 @@ import numpy as np
 import json
 import io
 import importlib.resources
+import pathlib
+import contextlib
 
 from . import OutputExpert, ExpertError
 from .util import ppp, EXTENDED_FLOAT_RE
@@ -101,7 +103,11 @@ class DrHook(OutputExpert):
             raise ExpertError('No drhook files found.')
 
     def _merge_walltime(self, stat):
-        script = importlib.resources.path("ial_expertise.drhook", 'drhook_merge_walltime_{}.pl'.format(stat))
+        with importlib.resources.path("ial_expertise.drhook", 'drhook_merge_walltime_{}.pl'.format(stat)) as script:
+            if isinstance(script, pathlib.PosixPath):
+                script = str(script)
+            elif isinstance(script, contextlib._GeneratorContextManager):
+                script = str(script.args[0])
         out = subprocess.check_output([script,] + self.drhookfiles)
         self.merged_drhook = out.decode('utf-8').split('\n')[:-1]  # to remove trailing empty line
 
